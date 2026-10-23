@@ -1140,21 +1140,17 @@ private struct MixerRow: View {
                         .truncationMode(.middle)
                         .help(arrangementStrings.arrange)
 
-                    if isPinned {
-                        Image(systemName: "pin.fill")
-                            .font(.system(size: 9))
-                            .foregroundStyle(.secondary)
-                            .accessibilityLabel(arrangementStrings.pin)
-                    }
                     Spacer(minLength: 4)
 
                     if app.persistenceID != nil {
-                        Menu { arrangementActions } label: {
-                            Image(systemName: "ellipsis")
+                        Button(action: togglePin) {
+                            Image(systemName: isPinned ? "pin.fill" : "pin")
+                                .font(.system(size: 9))
+                                .foregroundStyle(.secondary)
+                                .frame(width: 18, height: 18)
+                                .contentShape(Rectangle())
                         }
-                        .menuStyle(.borderlessButton)
-                        .menuIndicator(.hidden)
-                        .fixedSize()
+                        .buttonStyle(.plain)
                         .help(isPinned ? arrangementStrings.unpin : arrangementStrings.pin)
                         .accessibilityLabel("\(isPinned ? arrangementStrings.unpin : arrangementStrings.pin): \(app.name)")
                     }
