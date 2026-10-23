@@ -278,12 +278,14 @@ private struct MenuBarPanelMiniature: View {
 
     private var panel: some View {
         VStack(spacing: 8) {
-            BrandMark(width: 32, tint: colorScheme == .light ? Color(white: 0.03) : .white)
-                .frame(height: 18)
-                .accessibilityHidden(true)
+            HStack(spacing: 10) {
+                BrandMark(width: 32, tint: colorScheme == .light ? Color(white: 0.03) : .white)
+                    .frame(width: 32, height: 18)
+                    .accessibilityHidden(true)
+                headerActions
+            }
             tabStrip
             openTab
-            footer
         }
         .padding(Self.padding)
         .padding(.top, Self.arrowHeight)
@@ -366,15 +368,15 @@ private struct MenuBarPanelMiniature: View {
             .frame(width: width, height: 5)
     }
 
-    private var footer: some View {
+    private var headerActions: some View {
         HStack(spacing: 6) {
-            footerPill("gearshape")
-            footerPill("power")
+            actionPill("gearshape")
+            actionPill("power")
         }
         .accessibilityHidden(true)
     }
 
-    private func footerPill(_ symbol: String) -> some View {
+    private func actionPill(_ symbol: String) -> some View {
         Image(systemName: symbol)
             .font(.system(size: 8, weight: .medium))
             .foregroundStyle(.secondary)

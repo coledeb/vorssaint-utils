@@ -218,8 +218,6 @@ struct MenuPanelView: View {
                 .frame(width: 308)
             }
             .frame(width: 308, height: navigableScrollHeight)
-
-            footer
         }
         .padding(12)
         .frame(width: 332, height: navigablePanelHeight)
@@ -240,8 +238,6 @@ struct MenuPanelView: View {
                 }
                 .frame(width: 308, height: metricScrollHeight)
             }
-
-            footer
         }
         .padding(12)
         .frame(width: 332, height: metricPanelHeight)
@@ -452,12 +448,18 @@ struct MenuPanelView: View {
     }
 
     private var header: some View {
-        MenuPanelHeader()
+        MenuPanelHeader(actions: panelActions)
     }
 
+    // Embedded panels keep actions at the bottom because their host supplies
+    // the header. The menu bar popover places these beside its logo instead.
     private var footer: some View {
+        panelActions.padding(.top, 4)
+    }
+
+    private var panelActions: some View {
         HStack(spacing: 8) {
-            footerButton(l10n.s.panelSettings,
+            panelActionButton(l10n.s.panelSettings,
                          systemImage: "gearshape",
                          horizontalPadding: 7) {
                 // The hosted utility's own page, or the general one from the
@@ -466,7 +468,7 @@ struct MenuPanelView: View {
                 appDelegate()?.openSettingsWindow()
             }
 
-            footerButton(l10n.s.panelQuit,
+            panelActionButton(l10n.s.panelQuit,
                          systemImage: "power",
                          horizontalPadding: 7) {
                 NSApp.terminate(nil)
@@ -474,10 +476,9 @@ struct MenuPanelView: View {
         }
         .frame(maxWidth: .infinity)
         .frame(height: 30)
-        .padding(.top, 4)
     }
 
-    private func footerButton(_ title: String, systemImage: String,
+    private func panelActionButton(_ title: String, systemImage: String,
                               horizontalPadding: CGFloat = 8,
                               action: @escaping () -> Void) -> some View {
         Button(action: action) {
@@ -504,15 +505,19 @@ struct MenuPanelView: View {
     }
 }
 
-private struct MenuPanelHeader: View {
+private struct MenuPanelHeader<Actions: View>: View {
+    let actions: Actions
     @Environment(\.colorScheme) private var colorScheme
     @ObservedObject private var l10n = L10n.shared
 
     var body: some View {
-        ZStack {
-            BrandMark(width: 48, tint: markTint)
-                .frame(height: 28)
-                .accessibilityHidden(true)
+        VStack(spacing: 6) {
+            HStack(spacing: 12) {
+                BrandMark(width: 48, tint: markTint)
+                    .frame(width: 48, height: 28)
+                    .accessibilityHidden(true)
+                actions
+            }
 
             if AppInfo.isBeta {
                 HStack {
@@ -540,9 +545,7 @@ private struct MenuPanelHeader: View {
                 }
             }
         }
-        .frame(height: 28)
-        .padding(.vertical, 4)
-        .frame(maxWidth: .infinity)
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private var markTint: Color {
