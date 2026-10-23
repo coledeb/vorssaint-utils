@@ -563,6 +563,31 @@ enum MixerFeatureTests {
                                                      hideInactiveApps: true),
                "custom volume and output choices keep inactive mixer apps visible")
 
+        for enabled in [false, true] {
+            for pinned in [false, true] {
+                suite.expect(MixerRoutingSupport.shouldShowApp(
+                    isPlaying: false, volume: 1, selectedOutputDeviceUID: nil,
+                    hideInactiveApps: true, keepPinnedAppsVisible: enabled, isPinned: pinned)
+                    == (enabled && pinned),
+                    "only enabled pin retention overrides the inactive filter (enabled: \(enabled), pinned: \(pinned))")
+                suite.expect(MixerRoutingSupport.shouldRetainPinnedApp(
+                    persistenceID: "app.music", pinnedIDs: pinned ? ["app.music"] : [],
+                    hiddenIDs: [], enabled: enabled) == (enabled && pinned),
+                    "only opted-in pinned apps get a row without an audio connection")
+            }
+        }
+        suite.expect(!MixerRoutingSupport.shouldRetainPinnedApp(
+            persistenceID: "app.music", pinnedIDs: ["app.music"],
+            hiddenIDs: ["app.music"], enabled: true),
+            "explicitly hiding an app takes precedence over its pin")
+        suite.expect(!MixerRoutingSupport.shouldRetainPinnedApp(
+            persistenceID: nil, pinnedIDs: ["app.music"], hiddenIDs: [], enabled: true),
+            "pin retention cannot match a row without a persistent identity")
+        suite.expect(Defaults.registeredDefaults[DefaultsKey.mixerKeepPinnedAppsVisible] as? Bool == false,
+            "pinned-app retention defaults off")
+        suite.expect(SettingsBackupSupport.exportKeys().contains(DefaultsKey.mixerKeepPinnedAppsVisible),
+            "pinned-app retention is included in settings backups")
+
         // Issue #296. A tap mutes the app on the real output, so which build
         // may be installed, when an engine is allowed to go away and who may
         // be tapped at all decide whether an app suddenly plays at full

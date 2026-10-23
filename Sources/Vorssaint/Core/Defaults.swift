@@ -153,6 +153,7 @@ enum DefaultsKey {
     static let mixerShowFinder = "mixerShowFinder"
     static let mixerAppArrangement = "mixerAppArrangement"
     static let mixerHideInactiveApps = "mixerHideInactiveApps"
+    static let mixerKeepPinnedAppsVisible = "mixerKeepPinnedAppsVisible"
     static let mixerHiddenApps = "mixerHiddenApps"        // [persistence id: display name] kept out of the mixer list (issue #300)
     static let mixerMenuBarReplaceMainIcon = "mixerMenuBarReplaceMainIcon"
     static let mixerCozyVolumeControls = "mixerCozyVolumeControls"
@@ -1300,6 +1301,7 @@ enum Defaults {
         DefaultsKey.updateShowcaseMediaOverride: "",
         DefaultsKey.mixerShowFinder: true,
         DefaultsKey.mixerHideInactiveApps: false,
+        DefaultsKey.mixerKeepPinnedAppsVisible: false,
         DefaultsKey.mixerAppArrangement: "",
         DefaultsKey.mixerCozyVolumeControls: false,
         DefaultsKey.mixerMenuBarIndicator: false,

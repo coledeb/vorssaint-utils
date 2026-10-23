@@ -129,6 +129,19 @@ final class AppVolumeMixer: ObservableObject {
     }
     private var lastAudibleVolume: [String: Double] = [:]
     private var listenerInstalled = false
+    private var pinnedPreferencesObserver: AnyCancellable?
+    private var appLifecycleObserver: AnyCancellable?
+
+    private struct PinnedVisibilityPreferences: Equatable {
+        let enabled: Bool
+        let arrangement: String
+
+        static func current() -> Self {
+            Self(enabled: UserDefaults.standard.bool(forKey: DefaultsKey.mixerKeepPinnedAppsVisible),
+                 arrangement: UserDefaults.standard.string(forKey: DefaultsKey.mixerAppArrangement) ?? "")
+        }
+    }
+
     /// Device priority needs the output/default substrate without per-app
     /// process discovery. A feature transition restarts the listener set when
     /// this mode changes, so priority-only operation never scans processes.
@@ -267,6 +280,24 @@ final class AppVolumeMixer: ObservableObject {
                 self.scheduleEngineReconcile(after: 2)
             }
         }
+        if processMonitoringEnabled {
+            pinnedPreferencesObserver = NotificationCenter.default.publisher(for: UserDefaults.didChangeNotification)
+                .map { _ in PinnedVisibilityPreferences.current() }
+                .prepend(PinnedVisibilityPreferences.current())
+                .removeDuplicates()
+                .dropFirst()
+                .receive(on: DispatchQueue.main)
+                .sink { [weak self] _ in self?.refreshApps() }
+            appLifecycleObserver = NSWorkspace.shared.notificationCenter
+                .publisher(for: NSWorkspace.didLaunchApplicationNotification)
+                .merge(with: NSWorkspace.shared.notificationCenter
+                    .publisher(for: NSWorkspace.didTerminateApplicationNotification))
+                .receive(on: DispatchQueue.main)
+                .sink { [weak self] _ in
+                    guard UserDefaults.standard.bool(forKey: DefaultsKey.mixerKeepPinnedAppsVisible) else { return }
+                    self?.refreshApps()
+                }
+        }
         refreshApps()
     }
 
@@ -293,6 +324,8 @@ final class AppVolumeMixer: ObservableObject {
         // A refresh already reading the HAL must not publish into a mixer that
         // is no longer watching, nor re-register the listeners just removed.
         refresh.discardInFlight()
+        pinnedPreferencesObserver = nil
+        appLifecycleObserver = nil
         pruneRunningListeners(keeping: [])
         removeGlobalListeners()
         if let wakeObserver {
@@ -1176,6 +1209,13 @@ final class AppVolumeMixer: ObservableObject {
 
     // MARK: - Process discovery
 
+    /// A running pinned app can have a row before it owns any audio objects.
+    private struct RunningPinnedApp {
+        let pid: pid_t
+        let persistenceID: String
+        let name: String
+    }
+
     /// The main-thread state one refresh pass needs, copied in so the HAL pass
     /// never reads a property that another thread can be writing.
     private struct RefreshRequest {
@@ -1196,6 +1236,7 @@ final class AppVolumeMixer: ObservableObject {
         /// plus the Finder while its toggle is off (issue #300).
         let hiddenRowIDs: Set<String>
         let ownPid: pid_t
+        let runningPinnedApps: [RunningPinnedApp]
     }
 
     /// Everything one refresh read from the HAL, handed back for the main
@@ -1225,6 +1266,23 @@ final class AppVolumeMixer: ObservableObject {
         // request is remembered and runs as soon as that one lands.
         guard let generation = refresh.begin() else { return }
         let universalUID = universalOutputDeviceUID
+        let preferences = PinnedVisibilityPreferences.current()
+        let pinnedIDs = Set(MixerAppArrangement(rawValue: preferences.arrangement).pinned)
+        let hiddenIDs = MixerRoutingSupport.hiddenRowIDs(
+            hiddenApps: savedHiddenApps(),
+            showFinder: UserDefaults.standard.bool(forKey: DefaultsKey.mixerShowFinder))
+        // Snapshot AppKit's running apps on main. Silent rows have no audio
+        // objects, so adjusting them saves the choice without creating a tap.
+        let retainPinnedApps = processMonitoringEnabled && Self.isSupported && preferences.enabled && !pinnedIDs.isEmpty
+        let runningPinnedApps: [RunningPinnedApp] = retainPinnedApps ? NSWorkspace.shared.runningApplications.compactMap { app in
+            guard !app.isTerminated, app.activationPolicy == .regular,
+                  app.processIdentifier != ProcessInfo.processInfo.processIdentifier,
+                  MixerRoutingSupport.shouldRetainPinnedApp(persistenceID: app.bundleIdentifier,
+                      pinnedIDs: pinnedIDs, hiddenIDs: hiddenIDs, enabled: preferences.enabled),
+                  let id = app.bundleIdentifier else { return nil }
+            return RunningPinnedApp(pid: app.processIdentifier, persistenceID: id,
+                                    name: app.localizedName ?? id)
+        } : []
         let request = RefreshRequest(
             includeApps: processMonitoringEnabled,
             previousDefaultUID: currentOutputDeviceUID,
@@ -1250,10 +1308,9 @@ final class AppVolumeMixer: ObservableObject {
                 return (app.id, app.audioObjects)
             }),
             showFinder: UserDefaults.standard.bool(forKey: DefaultsKey.mixerShowFinder),
-            hiddenRowIDs: MixerRoutingSupport.hiddenRowIDs(
-                hiddenApps: savedHiddenApps(),
-                showFinder: UserDefaults.standard.bool(forKey: DefaultsKey.mixerShowFinder)),
-            ownPid: ProcessInfo.processInfo.processIdentifier)
+            hiddenRowIDs: hiddenIDs,
+            ownPid: ProcessInfo.processInfo.processIdentifier,
+            runningPinnedApps: runningPinnedApps)
 
         halQueue.async { [weak self] in
             let snapshot = Self.readSnapshot(request)
@@ -1435,10 +1492,20 @@ final class AppVolumeMixer: ObservableObject {
             }
         }
 
+        var idleNames: [pid_t: String] = [:]
+        for app in request.runningPinnedApps where groups[app.pid] == nil {
+            groups[app.pid] = []
+            bundleHints[app.pid] = app.persistenceID
+            idleNames[app.pid] = app.name
+            if MixerRoutingSupport.bypassesProcessTap(bundleIdentifier: app.persistenceID, name: app.name) {
+                bypassed.insert(app.pid)
+            }
+        }
+
         var next: [MixerApp] = []
         for (owner, objects) in groups {
             let fallbackName = "pid \(owner)"
-            let name = ResponsibleProcess.displayName(pid: owner, fallback: fallbackName)
+            let name = idleNames[owner] ?? ResponsibleProcess.displayName(pid: owner, fallback: fallbackName)
             // The pid fallback is not a name to save under: pids recycle.
             let identity = MixerRoutingSupport.rowIdentity(bundleIdentifier: bundleHints[owner],
                                                            ownerPid: owner,

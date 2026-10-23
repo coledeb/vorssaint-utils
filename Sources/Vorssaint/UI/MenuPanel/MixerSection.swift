@@ -23,6 +23,7 @@ struct MixerSection: View {
     private var arrangementValue = ""
     @AppStorage(DefaultsKey.mixerHideInactiveApps)
     private var hideInactiveApps = false
+    @AppStorage(DefaultsKey.mixerKeepPinnedAppsVisible) private var keepPinnedAppsVisible = false
     @State private var optionsExpanded = false
     @State private var normalSliderTint = Color(nsColor: .controlAccentColor)
     @State private var accentRevision = 0
@@ -584,7 +585,9 @@ struct MixerSection: View {
             MixerRoutingSupport.shouldShowApp(isPlaying: app.isPlaying,
                                               volume: app.volume,
                                               selectedOutputDeviceUID: app.selectedOutputDeviceUID,
-                                              hideInactiveApps: hideInactiveApps)
+                                              hideInactiveApps: hideInactiveApps,
+                                              keepPinnedAppsVisible: keepPinnedAppsVisible,
+                                              isPinned: arrangement.isPinned(app.persistenceID))
         }
     }
 
@@ -731,6 +734,7 @@ struct MixerOptionsControls: View {
     @ObservedObject private var permissions = Permissions.shared
     @AppStorage(DefaultsKey.mixerHideInactiveApps)
     private var hideInactiveApps = false
+    @AppStorage(DefaultsKey.mixerKeepPinnedAppsVisible) private var keepPinnedAppsVisible = false
     @AppStorage(DefaultsKey.mixerLowerVolumeOnHeadphonesDisconnect)
     private var lowerOnHeadphonesDisconnect = false
     @AppStorage(DefaultsKey.mixerHeadphonesDisconnectVolumePercent)
@@ -751,6 +755,10 @@ struct MixerOptionsControls: View {
             .font(.system(size: 11.5, weight: .medium))
             if AppVolumeMixer.isSupported {
                 inactiveAppsVisibilityToggle
+                Toggle(FeatureStrings.mixer(l10n.language).keepPinnedAppsVisible,
+                       isOn: $keepPinnedAppsVisible)
+                    .toggleStyle(.checkbox)
+                    .font(.system(size: 11.5, weight: .medium))
             }
             Toggle(l10n.s.mixerMenuBarIndicator, isOn: $menuBarIndicator)
                 .toggleStyle(.checkbox)

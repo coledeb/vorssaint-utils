@@ -373,9 +373,20 @@ enum MixerRoutingSupport {
     static func shouldShowApp(isPlaying: Bool,
                               volume: Double,
                               selectedOutputDeviceUID: String?,
-                              hideInactiveApps: Bool) -> Bool {
-        guard hideInactiveApps else { return true }
+                              hideInactiveApps: Bool,
+                              keepPinnedAppsVisible: Bool = false,
+                              isPinned: Bool = false) -> Bool {
+        guard hideInactiveApps, !(keepPinnedAppsVisible && isPinned) else { return true }
         return isPlaying || !isUnity(volume) || selectedOutputDeviceUID != nil
+    }
+
+    /// Explicitly hidden apps still take precedence over pin retention.
+    static func shouldRetainPinnedApp(persistenceID: String?,
+                                      pinnedIDs: Set<String>,
+                                      hiddenIDs: Set<String>,
+                                      enabled: Bool) -> Bool {
+        guard enabled, let persistenceID else { return false }
+        return pinnedIDs.contains(persistenceID) && !hiddenIDs.contains(persistenceID)
     }
 
     /// Turns the text entered beside a mixer slider into its level. The field

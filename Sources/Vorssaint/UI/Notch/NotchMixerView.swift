@@ -17,6 +17,7 @@ struct NotchMixerView: View {
     @ObservedObject private var l10n = L10n.shared
     @AppStorage(DefaultsKey.mixerAppArrangement) private var arrangementValue = ""
     @AppStorage(DefaultsKey.mixerHideInactiveApps) private var hideInactiveApps = false
+    @AppStorage(DefaultsKey.mixerKeepPinnedAppsVisible) private var keepPinnedAppsVisible = false
     @State private var showingOptions = false
     @State private var editingVolumeID: String?
     @State private var draggingAppID: String?
@@ -37,7 +38,9 @@ struct NotchMixerView: View {
         arrangement.ordered(mixer.apps, identity: { $0.persistenceID }).filter { app in
             MixerRoutingSupport.shouldShowApp(isPlaying: app.isPlaying, volume: app.volume,
                                               selectedOutputDeviceUID: app.selectedOutputDeviceUID,
-                                              hideInactiveApps: hideInactiveApps)
+                                              hideInactiveApps: hideInactiveApps,
+                                              keepPinnedAppsVisible: keepPinnedAppsVisible,
+                                              isPinned: arrangement.isPinned(app.persistenceID))
         }
     }
 
