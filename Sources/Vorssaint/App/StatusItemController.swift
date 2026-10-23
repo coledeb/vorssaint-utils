@@ -374,6 +374,7 @@ final class StatusItemController {
         }
         let volumeState = volumePlacement == .main ? currentVolumeState : nil
         let micBadgeActive = renderedMicBadgeActive
+        let micCozySpacing = defaults.bool(forKey: DefaultsKey.micMuteMenuBarCozySpacing)
         let optionEnabled = defaults.bool(forKey: DefaultsKey.menuBarHideIconWithMetrics)
         let separateMetrics = defaults.bool(forKey: DefaultsKey.menuBarSeparateMetrics)
         let signal = updateAvailable || micBadgeActive || volumeState != nil
@@ -405,7 +406,7 @@ final class StatusItemController {
         let stateKey = [String(hidden), String(mainItemHidden), String(updateAvailable),
                         String(keepAwakeActive), KeepAwakeIconTint.current.rawValue,
                         KeepAwakeActiveIcon.current.rawValue, BlackHoleGlyph.chosenSymbolName,
-                        String(micBadgeActive), String(describing: volumeState)].joined(separator: "|")
+                        String(micBadgeActive), String(micCozySpacing), String(describing: volumeState)].joined(separator: "|")
         guard stateKey != lastIconStateKey else { return }
         lastIconStateKey = stateKey
 
@@ -426,7 +427,7 @@ final class StatusItemController {
             stateImage = BlackHoleGlyph.image(active: keepAwakeActive)
         }
         if micBadgeActive {
-            button.image = BlackHoleGlyph.micMutedImage(over: stateImage) ?? stateImage
+            button.image = BlackHoleGlyph.micMutedImage(over: stateImage, cozySpacing: micCozySpacing) ?? stateImage
         } else {
             button.image = stateImage
         }
@@ -1128,15 +1129,27 @@ enum BlackHoleGlyph {
     /// is a real color, so the composite can't stay a template image; the
     /// drawing handler runs against the destination appearance, which keeps a
     /// template underlying glyph legible on both light and dark menu bars.
-    static func micMutedImage(over underlying: NSImage?) -> NSImage? {
+    static func micMutedImage(over underlying: NSImage?, cozySpacing: Bool = false) -> NSImage? {
         guard let underlying else { return nil }
         guard let badge = NSImage(systemSymbolName: "mic.slash.fill",
                                   accessibilityDescription: nil)?
             .withSymbolConfiguration(.init(pointSize: 12, weight: .semibold)) else { return nil }
         let gap: CGFloat = 2
         let badgeSize = badge.size
+        // Space the visible shapes, not their padded image canvases. This
+        // stays compact even when macOS's spacing between items is reduced.
+        let glyphInk = (cozySpacing ? inkBounds(of: underlying) : nil) ?? NSRect(origin: .zero, size: underlying.size)
+        let badgeInk = (cozySpacing ? inkBounds(of: badge) : nil) ?? NSRect(origin: .zero, size: badgeSize)
+        let badgeStart = glyphInk.maxX + gap
+        let badgeX = badgeStart - badgeInk.minX
+        let trailingPadding = max(0, underlying.size.width - glyphInk.maxX)
+        // Integral point widths keep AppKit from rounding the image and button
+        // differently as macOS animates neighboring menu bar items.
+        let width = cozySpacing
+            ? ceil(max(underlying.size.width, badgeStart + badgeInk.width + trailingPadding))
+            : underlying.size.width + gap + badgeSize.width
         let height = max(underlying.size.height, badgeSize.height)
-        let size = NSSize(width: underlying.size.width + gap + badgeSize.width, height: height)
+        let size = NSSize(width: width, height: height)
         let composed = NSImage(size: size, flipped: false) { _ in
             let glyphRect = NSRect(x: 0, y: (height - underlying.size.height) / 2,
                                    width: underlying.size.width, height: underlying.size.height)
@@ -1146,12 +1159,18 @@ enum BlackHoleGlyph {
                 NSColor.labelColor.setFill()
                 glyphRect.fill(using: .sourceAtop)
             }
-            let badgeRect = NSRect(x: underlying.size.width + gap,
+            NSGraphicsContext.saveGraphicsState()
+            if cozySpacing {
+                NSRect(x: badgeStart, y: 0,
+                       width: max(0, width - trailingPadding - badgeStart), height: height).clip()
+            }
+            let badgeRect = NSRect(x: badgeX,
                                    y: (height - badgeSize.height) / 2,
                                    width: badgeSize.width, height: badgeSize.height)
             badge.draw(in: badgeRect, from: .zero, operation: .sourceOver, fraction: 1)
             NSColor.systemRed.setFill()
             badgeRect.fill(using: .sourceAtop)
+            NSGraphicsContext.restoreGraphicsState()
             return true
         }
         composed.isTemplate = false

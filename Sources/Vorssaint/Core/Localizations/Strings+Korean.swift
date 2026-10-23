@@ -206,6 +206,10 @@ extension Strings {
         micUnmutePartialHUD: "일부 마이크가 아직 음소거되어 있습니다",
         micMuteMenuBarToggle: "음소거 중 메뉴 막대에 표시",
         micMuteMenuBarCaption: "이 기능으로 마이크를 음소거하는 동안 메뉴 막대의 앱 아이콘 옆에 빨간 줄이 그어진 마이크가 표시됩니다.",
+        micMuteMenuBarSpacing: "아이콘 간격",
+        micMuteMenuBarSpacingDefault: "기본",
+        micMuteMenuBarSpacingCozy: "좁게",
+        micMuteMenuBarSpacingCaption: "음소거된 마이크와 Vorssaint 기본 아이콘 사이의 간격입니다.",
 
         pastePlainName: "일반 텍스트로 붙여넣기",
         pastePlainCaption: "색상, 글꼴, 서식 없이 복사한 내용을 붙여넣습니다. 원본은 클립보드에 유지됩니다.",

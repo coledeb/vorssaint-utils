@@ -637,6 +637,7 @@ enum DefaultsKey {
     static let micMuteSavedChannelVolumes = "micMuteSavedChannelVolumes" // [device uid: [channel: input volume]] to restore on unmute
     static let micMuteMutedDevices = "micMuteMutedDevices"   // uids of the devices this app muted
     static let micMuteMenuBarIndicator = "micMuteMenuBarIndicator" // badge the status icon while muted
+    static let micMuteMenuBarCozySpacing = "micMuteMenuBarCozySpacing"
     static let quickLauncherShortcutEnabled = "quickLauncherShortcutEnabled"
     static let quickLauncherShortcut = "quickLauncherShortcut"
     static let quickLauncherItemOrder = "quickLauncherItemOrder"
@@ -1828,6 +1829,7 @@ enum Defaults {
         DefaultsKey.micMuteActive: false,
         DefaultsKey.micMuteSavedVolume: 0.75,
         DefaultsKey.micMuteMenuBarIndicator: true,  // owner's call: on by default in 3.1.8 (badge only shows while muted)
+        DefaultsKey.micMuteMenuBarCozySpacing: false,
         DefaultsKey.quickLauncherShortcutEnabled: true,
         DefaultsKey.quickLauncherShortcut: GlobalShortcut.quickLauncherDefault.storageValue,
         DefaultsKey.quickLauncherHiddenItems: "",

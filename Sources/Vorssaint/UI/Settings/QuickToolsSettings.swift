@@ -22,6 +22,7 @@ struct QuickToolsSettings: View {
     @AppStorage(DefaultsKey.scratchpadBackgroundOpacity) private var scratchpadBackgroundOpacity = 0.0
     @AppStorage(DefaultsKey.scratchpadTextSize) private var scratchpadTextSize = ScratchpadSupport.defaultTextSize
     @AppStorage(DefaultsKey.micMuteMenuBarIndicator) private var micMenuBarIndicator = false
+    @AppStorage(DefaultsKey.micMuteMenuBarCozySpacing) private var micCozySpacing = false
     @AppStorage(DefaultsKey.cleaningModeKeepScreenVisible) private var cleaningModeKeepScreenVisible = false
 
     var body: some View {
@@ -120,6 +121,15 @@ struct QuickToolsSettings: View {
                     Text(l10n.s.micMuteMenuBarCaption)
                         .font(.caption)
                         .foregroundStyle(.secondary)
+                    if micMenuBarIndicator {
+                        Picker(l10n.s.micMuteMenuBarSpacing, selection: $micCozySpacing) {
+                            Text(l10n.s.micMuteMenuBarSpacingDefault).tag(false)
+                            Text(l10n.s.micMuteMenuBarSpacingCozy).tag(true)
+                        }
+                        Text(l10n.s.micMuteMenuBarSpacingCaption)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
                     Toggle(l10n.s.quickToolShortcutToggle, isOn: $micShortcutEnabled)
                         .onChange(of: micShortcutEnabled) { _, _ in
                             MicMuteService.shared.syncWithPreferences()
