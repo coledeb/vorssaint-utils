@@ -161,6 +161,18 @@ struct MixerRefreshCoordinator {
 }
 
 enum MixerRoutingSupport {
+    /// HAL returns a retained URL; keep only its value in device snapshots.
+    static func deviceIconURL(_ device: AudioObjectID) -> URL? {
+        var address = AudioObjectPropertyAddress(mSelector: kAudioDevicePropertyIcon,
+                                                mScope: kAudioObjectPropertyScopeGlobal,
+                                                mElement: kAudioObjectPropertyElementMain)
+        var value: Unmanaged<CFURL>?
+        var size = UInt32(MemoryLayout<Unmanaged<CFURL>?>.size)
+        guard AudioObjectGetPropertyData(device, &address, 0, nil, &size, &value) == noErr,
+              let value else { return nil }
+        return value.takeRetainedValue() as URL
+    }
+
     static func observationNeeds(isAvailable: (AppFeature) -> Bool)
         -> (devices: Bool, processes: Bool) {
         let mixer = isAvailable(.mixer)

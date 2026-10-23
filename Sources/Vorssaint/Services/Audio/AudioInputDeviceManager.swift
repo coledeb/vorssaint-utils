@@ -10,6 +10,7 @@ struct MixerInputDevice: Identifiable, Equatable {
     let id: String
     let uid: String
     let name: String
+    var iconURL: URL? = nil
     let isDefault: Bool
     let priorityTier: MixerRoutingSupport.PriorityTier
     fileprivate let audioObjectID: AudioObjectID
@@ -710,6 +711,7 @@ final class AudioInputDeviceManager: ObservableObject {
             devices.append(MixerInputDevice(id: uid,
                                             uid: uid,
                                             name: name,
+                                            iconURL: MixerRoutingSupport.deviceIconURL(deviceID),
                                             isDefault: uid == defaultUID,
                                             priorityTier: MixerRoutingSupport.PriorityTier(
                                                 transportType: transportType),

@@ -619,6 +619,7 @@ extension Strings {
         mixerSystemOutputTooltip: "Vybrať systémový výstup",
         mixerSystemOutputErrorFormat: "Nepodarilo sa prepnúť: %@",
         mixerMenuBarReplaceMainIcon: "Nahradiť hlavnú ikonu v lište menu",
+        mixerVolumeControls: "Ovládanie hlasitosti",
         mixerAlertVolumeUnavailable: "Hlasitosť upozornení nie je dostupná",
         mixerMenuBarIndicator: "Zobraziť hlasitosť výstupu v lište menu",
         mixerOutputMuted: "Výstup stlmený",

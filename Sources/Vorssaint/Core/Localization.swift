@@ -799,6 +799,7 @@ struct Strings {
     let mixerSystemOutputTooltip: String
     let mixerSystemOutputErrorFormat: String
     let mixerMenuBarReplaceMainIcon: String
+    let mixerVolumeControls: String
     let mixerAlertVolumeUnavailable: String
     let mixerMenuBarIndicator: String
     let mixerOutputMuted: String
@@ -1944,6 +1945,7 @@ extension Strings {
         mixerSystemOutputTooltip: "Escolher saída do sistema",
         mixerSystemOutputErrorFormat: "Não foi possível trocar: %@",
         mixerMenuBarReplaceMainIcon: "Substituir o ícone principal da barra de menus",
+        mixerVolumeControls: "Controles de volume",
         mixerAlertVolumeUnavailable: "Volume de alertas indisponível",
         mixerMenuBarIndicator: "Mostrar volume de saída na barra de menus",
         mixerOutputMuted: "Saída silenciada",
@@ -3064,6 +3066,7 @@ extension Strings {
         mixerSystemOutputTooltip: "Choose system output",
         mixerSystemOutputErrorFormat: "Could not switch: %@",
         mixerMenuBarReplaceMainIcon: "Replace primary icon",
+        mixerVolumeControls: "Volume controls",
         mixerAlertVolumeUnavailable: "Alert volume unavailable",
         mixerMenuBarIndicator: "Show output volume in menu bar",
         mixerOutputMuted: "Output muted",

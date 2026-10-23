@@ -12,6 +12,7 @@ struct MixerOutputDevice: Identifiable, Equatable {
     let id: String
     let uid: String
     let name: String
+    var iconURL: URL? = nil
     let isDefault: Bool
     let isHeadphones: Bool
     let canBeDefaultOutput: Bool
@@ -2114,6 +2115,7 @@ final class AppVolumeMixer: ObservableObject {
             devices.append(MixerOutputDevice(id: uid,
                                              uid: uid,
                                              name: name,
+                                             iconURL: MixerRoutingSupport.deviceIconURL(deviceID),
                                              isDefault: uid == defaultUID,
                                              isHeadphones: MixerRoutingSupport.outputLooksLikeHeadphones(
                                                 name: name,

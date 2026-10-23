@@ -620,6 +620,7 @@ extension Strings {
         mixerSystemOutputTooltip: "시스템 출력 선택",
         mixerSystemOutputErrorFormat: "변경하지 못했습니다: %@",
         mixerMenuBarReplaceMainIcon: "메뉴 막대의 기본 아이콘 대체",
+        mixerVolumeControls: "음량 제어",
         mixerAlertVolumeUnavailable: "알림 음량을 사용할 수 없습니다",
         mixerMenuBarIndicator: "메뉴 막대에 출력 음량 표시",
         mixerOutputMuted: "출력 음소거됨",
