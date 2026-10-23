@@ -56,6 +56,28 @@
 
 Per app volume, a real system monitor, a better app switcher, window snapping, Dock previews, clipboard history, text snippets, a file shelf, an uninstaller. The utilities Mac users usually buy one by one, together behind a single menu bar icon, with no account, no telemetry and no subscription.
 
+> [!NOTE]
+> **About this fork (Audio changes)**
+>
+> This fork of [Vorssaint](https://github.com/vorssaint/vorssaint-utils) adds audio controls and mixer refinements for my personal setup, alongside a few panel and build improvements.
+>
+> - **Live output volume in the menu bar (optional).** Show a speaker icon beside the Vorssaint icon or use it in place of the main icon. Its waves follow the current output volume; the speaker turns red at 100%, and muting shows a red speaker with an X instead of waves. Changes follow the system's volume and mute state without polling.
+> - **Default or Cozy volume controls.** Choose the original labeled layout or a compact row for each output, system-sounds and microphone control, with aligned sliders, editable percentages and boxed device selectors. Device menus keep full names and use device icons where available.
+> - **Separate system-sounds volume.** Adjust macOS alert and sound-effect volume independently of output and microphone volume. The level loads before the mixer opens and follows external changes while the mixer is visible.
+> - **Keep pinned apps visible (optional).** Pinned apps can stay in both the panel and Dynamic Island mixers when inactive, including running apps that aren't currently producing audio. Quitting removes their rows; reopening restores them. Explicitly hidden apps stay hidden, and saved volume and output choices are preserved.
+> - **Direct mixer pin button.** Pin or unpin an app directly from its row; the right-click menu remains available.
+> - **Default or Cozy muted-microphone icon spacing.** Choose the original spacing or a tighter gap beside the menu bar icon. The microphone badge stays in place as the speaker's volume or mute state changes.
+>
+> **Other improvements**
+>
+> - **Settings and Quit beside the logo.** The menu bar panel keeps these actions in its header for quicker access and less space at the bottom.
+> - **Panel fits its content.** Balanced spacing and content-based sizing reduce empty space while keeping long sections scrollable.
+> - **Single-tab selector visibility.** Choose whether to hide the tab selector when only one section is visible.
+> - **Local builds without a signing certificate.** [Tools/build-local.py](Tools/build-local.py) wraps the upstream build with ad-hoc signing and a local compiler cache. Generated local bundles use the Vorssaint name; explicit installs retain the developer name so they can coexist with the installed app.
+> - **Upstream update proposals.** A daily [sync workflow](.github/UPSTREAM_SYNC.md) updates the fork's upstream branch and opens or refreshes a pull request for review. Updates are merged manually.
+>
+> For full details of each change, see the [commits list](https://github.com/coledeb/vorssaint-utils/commits/main).
+
 ## Install only what you use
 
 Choose individual features or start with a preset. Uninstalled features stop loading and disappear from the interface; reinstalling restores their settings. Setup asks only for the permissions your choices need.
