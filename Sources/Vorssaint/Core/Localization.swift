@@ -3068,7 +3068,7 @@ extension Strings {
         mixerMenuBarReplaceMainIcon: "Replace primary icon",
         mixerVolumeControls: "Volume controls",
         mixerAlertVolumeUnavailable: "Alert volume unavailable",
-        mixerMenuBarIndicator: "Show output volume in menu bar",
+        mixerMenuBarIndicator: "Show output volume icon in menu bar",
         mixerOutputMuted: "Output muted",
         mixerLowerOnHeadphonesDisconnect: "Lower volume when headphones disconnect",
         mixerLowerOnHeadphonesDisconnectCaption: "Adjusts output when wired or Bluetooth headphones disconnect.",
