@@ -113,6 +113,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, NSW
             self?.captureStatusClick()
             self?.toggleMainPopover()
         }
+        statusController.onVolumeIndicatorClick = { [weak self] button in
+            self?.captureStatusClick()
+            self?.toggleMainPopover(anchor: button)
+        }
         statusController.onRightClick = { [weak self] button in
             if AppFeature.keepAwake.isAvailable
                 && UserDefaults.standard.bool(forKey: DefaultsKey.keepAwakeRightClickToggle) {
@@ -495,14 +499,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, NSW
         showPopover(anchor: button)
     }
 
-    private func toggleMainPopover() {
+    private func toggleMainPopover(anchor button: NSStatusBarButton? = nil) {
         if NotchSupport.routesAppPanel(), NotchService.shared.acceptsSystemFeedback {
             NotchService.shared.openAppPanel(toggle: true); return
         }
         if !popoverIsOpen {
             MenuPanelFocus.shared.showNormalPanel()
         }
-        togglePopover()
+        togglePopover(anchor: button)
     }
 
     func isOverStatusItem(_ point: NSPoint) -> Bool {

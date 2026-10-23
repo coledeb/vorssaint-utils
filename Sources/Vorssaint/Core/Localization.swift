@@ -794,6 +794,9 @@ struct Strings {
     let mixerSystemOutputNoDevices: String
     let mixerSystemOutputTooltip: String
     let mixerSystemOutputErrorFormat: String
+    let mixerMenuBarReplaceMainIcon: String
+    let mixerMenuBarIndicator: String
+    let mixerOutputMuted: String
     let mixerLowerOnHeadphonesDisconnect: String
     let mixerLowerOnHeadphonesDisconnectCaption: String
     let mixerHeadphonesDisconnectVolume: String
@@ -1931,6 +1934,9 @@ extension Strings {
         mixerSystemOutputNoDevices: "Nenhuma saída encontrada",
         mixerSystemOutputTooltip: "Escolher saída do sistema",
         mixerSystemOutputErrorFormat: "Não foi possível trocar: %@",
+        mixerMenuBarReplaceMainIcon: "Substituir o ícone principal da barra de menus",
+        mixerMenuBarIndicator: "Mostrar volume de saída na barra de menus",
+        mixerOutputMuted: "Saída silenciada",
         mixerLowerOnHeadphonesDisconnect: "Baixar volume ao desconectar fones",
         mixerLowerOnHeadphonesDisconnectCaption: "Ajusta a saída quando fones com fio ou Bluetooth desconectam.",
         mixerHeadphonesDisconnectVolume: "Volume ao desconectar",
@@ -3043,6 +3049,9 @@ extension Strings {
         mixerSystemOutputNoDevices: "No outputs found",
         mixerSystemOutputTooltip: "Choose system output",
         mixerSystemOutputErrorFormat: "Could not switch: %@",
+        mixerMenuBarReplaceMainIcon: "Replace primary icon",
+        mixerMenuBarIndicator: "Show output volume in menu bar",
+        mixerOutputMuted: "Output muted",
         mixerLowerOnHeadphonesDisconnect: "Lower volume when headphones disconnect",
         mixerLowerOnHeadphonesDisconnectCaption: "Adjusts output when wired or Bluetooth headphones disconnect.",
         mixerHeadphonesDisconnectVolume: "Volume after disconnect",

@@ -12,6 +12,7 @@ final class StatusItemController {
     /// while the main item is out of the bar.
     var onRightClick: ((NSStatusBarButton?) -> Void)?
     var onMetricClick: ((MenuBarMetric, NSStatusBarButton) -> Void)?
+    var onVolumeIndicatorClick: ((NSStatusBarButton) -> Void)?
     var onClipboardPreviewClick: (() -> Void)?
 
     private(set) var statusItem: NSStatusItem!
@@ -20,6 +21,9 @@ final class StatusItemController {
     /// MenuBarMetric, since its content comes from ClipboardHistoryService
     /// rather than a SystemSnapshot reading.
     private var clipboardPreviewStatusItem: NSStatusItem?
+    private var volumeStatusItem: NSStatusItem?
+    private var volumeSubscription: AnyCancellable?
+    private var lastVolumeState: VolumeMenuBarState?
     private var metricStatusItems: [String: NSStatusItem] = [:]
     private var metricStatusItemFocus: [String: MenuBarMetric] = [:]
     private var cancellables = Set<AnyCancellable>()
@@ -82,7 +86,7 @@ final class StatusItemController {
     var button: NSStatusBarButton? { statusItem.button }
 
     func containsStatusItem(at screenPoint: NSPoint) -> Bool {
-        let items = [statusItem, clipboardPreviewStatusItem].compactMap { $0 } + Array(metricStatusItems.values)
+        let items = [statusItem, clipboardPreviewStatusItem, volumeStatusItem].compactMap { $0 } + Array(metricStatusItems.values)
         // A hidden item keeps its last frame, which another app's item may
         // occupy by now.
         let buttons = items.filter(\.isVisible).compactMap(\.button)
@@ -212,6 +216,14 @@ final class StatusItemController {
             }
             .store(in: &cancellables)
 
+        bindVolumeIndicatorIfAvailable()
+        FeatureRuntime.shared.$revision
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                self?.bindVolumeIndicatorIfAvailable()
+                self?.refresh()
+            }
+            .store(in: &cancellables)
         bindClipboardPreviewIfAvailable()
 
         defaultsObserver = NotificationCenter.default.addObserver(forName: UserDefaults.didChangeNotification,
@@ -237,6 +249,8 @@ final class StatusItemController {
             self.refresh()
             self.bindClipboardPreviewIfAvailable()
             self.syncClipboardPreviewItem()
+            self.bindVolumeIndicatorIfAvailable()
+            self.syncVolumeIndicator()
         }
     }
 
@@ -266,6 +280,7 @@ final class StatusItemController {
         // so a future "recreate the status item" path can't leak a firing timer or
         // a block observer that outlives this instance.
         titleTimer?.invalidate()
+        if let volumeStatusItem { NSStatusBar.system.removeStatusItem(volumeStatusItem) }
         if let defaultsObserver { NotificationCenter.default.removeObserver(defaultsObserver) }
         for item in metricStatusItems.values {
             NSStatusBar.system.removeStatusItem(item)
@@ -344,13 +359,10 @@ final class StatusItemController {
         refresh()
     }
 
-    /// Reflects keep-awake state and an available update in the icon. Updates
-    /// keep the blue attention glyph; an active session uses the chosen icon.
-    /// With the mute indicator option on, a red slashed mic joins the glyph
-    /// while the microphone is muted, whatever the underlying state. The
-    /// glyph can also hide entirely while metrics render in the title (user
-    /// option); the decision reads the button's actual title, so it must run
-    /// AFTER refresh() writes it — refresh() calls this at its end.
+    /// The volume replacement keeps the main slot visible, with the optional
+    /// microphone badge beside it. Otherwise the usual keep-awake, update and
+    /// hide-icon choices apply. Run after refresh writes the title, since the
+    /// hide-icon choice depends on whether that title contains metrics.
     private func updateIconAppearance() {
         guard let button = statusItem?.button else { return }
         let defaults = UserDefaults.standard
@@ -360,10 +372,11 @@ final class StatusItemController {
         } else {
             updateAvailable = false
         }
+        let volumeState = volumePlacement == .main ? currentVolumeState : nil
         let micBadgeActive = renderedMicBadgeActive
         let optionEnabled = defaults.bool(forKey: DefaultsKey.menuBarHideIconWithMetrics)
         let separateMetrics = defaults.bool(forKey: DefaultsKey.menuBarSeparateMetrics)
-        let signal = updateAvailable || micBadgeActive
+        let signal = updateAvailable || micBadgeActive || volumeState != nil
         let islandHides = MenuBarSpacingSupport.islandHidesStatusIcon(
             in: defaults, hiddenInFullscreen: islandHiddenInFullscreen) && !signal
         let hidden = islandHides || MenuBarSpacingSupport.shouldHideStatusIcon(
@@ -392,7 +405,7 @@ final class StatusItemController {
         let stateKey = [String(hidden), String(mainItemHidden), String(updateAvailable),
                         String(keepAwakeActive), KeepAwakeIconTint.current.rawValue,
                         KeepAwakeActiveIcon.current.rawValue, BlackHoleGlyph.chosenSymbolName,
-                        String(micBadgeActive)].joined(separator: "|")
+                        String(micBadgeActive), String(describing: volumeState)].joined(separator: "|")
         guard stateKey != lastIconStateKey else { return }
         lastIconStateKey = stateKey
 
@@ -405,7 +418,9 @@ final class StatusItemController {
             return
         }
         let stateImage: NSImage?
-        if updateAvailable {
+        if let volumeState {
+            stateImage = VolumeMenuBarGlyph.image(for: volumeState)
+        } else if updateAvailable {
             stateImage = BlackHoleGlyph.attentionImage()
         } else {
             stateImage = BlackHoleGlyph.image(active: keepAwakeActive)
@@ -430,7 +445,7 @@ final class StatusItemController {
     /// that is out of the bar has nowhere on screen to open from.
     func menuHost(for button: NSStatusBarButton?) -> NSStatusItem {
         guard !statusItem.isVisible, let button else { return statusItem }
-        let others = [clipboardPreviewStatusItem].compactMap { $0 } + Array(metricStatusItems.values)
+        let others = [clipboardPreviewStatusItem, volumeStatusItem].compactMap { $0 } + Array(metricStatusItems.values)
         return others.first { $0.button === button } ?? statusItem
     }
 
@@ -452,6 +467,7 @@ final class StatusItemController {
     }
 
     private func performRefresh() {
+        syncVolumeIndicator()
         guard let button = statusItem?.button else { return }
         let manager = KeepAwakeManager.shared
         let strings = L10n.shared.s
@@ -526,7 +542,7 @@ final class StatusItemController {
             } else {
                 updateAvailable = false
             }
-            let signal = updateAvailable || renderedMicBadgeActive
+            let signal = updateAvailable || renderedMicBadgeActive || volumePlacement == .main
             let glyphHidden = (MenuBarSpacingSupport.islandHidesStatusIcon(
                 in: defaults, hiddenInFullscreen: islandHiddenInFullscreen) && !signal)
                 || MenuBarSpacingSupport.shouldHideStatusIcon(
@@ -563,7 +579,9 @@ final class StatusItemController {
         }
 
         let toolTip: String
-        if manager.isActive {
+        if volumePlacement == .main {
+            toolTip = volumeDescription
+        } else if manager.isActive {
             if manager.sessionTrigger == .automation {
                 toolTip = FeatureStrings.keepAwakeAutomation(L10n.shared.language)
                     .activeStatus(for: manager.activeAutomationConditions)
@@ -578,6 +596,7 @@ final class StatusItemController {
         if button.toolTip != toolTip {
             button.toolTip = toolTip
         }
+        button.setAccessibilityLabel(volumePlacement == .main ? volumeDescription : nil)
 
         // The icon decision depends on the title just written (the glyph may
         // hide only while metrics actually render), so it re-runs here — the
@@ -840,6 +859,83 @@ final class StatusItemController {
         let tooltip = entry?.menuBarText(maxCharacters: ClipboardHistoryEditing.tooltipCharacters) ?? ""
         if button.toolTip != tooltip {
             button.toolTip = tooltip
+        }
+    }
+
+    private var volumePlacement: VolumeMenuBarPlacement {
+        let defaults = UserDefaults.standard
+        return VolumeMenuBarPlacement(featureAvailable: AppFeature.mixer.isAvailable,
+                                      enabled: defaults.bool(forKey: DefaultsKey.mixerMenuBarIndicator),
+                                      replaceMain: defaults.bool(forKey: DefaultsKey.mixerMenuBarReplaceMainIcon))
+    }
+
+    private var currentVolumeState: VolumeMenuBarState {
+        let mixer = AppVolumeMixer.shared
+        return VolumeMenuBarState(volume: mixer.systemOutputVolume, muted: mixer.systemOutputMuted)
+    }
+
+    private var volumeDescription: String {
+        let strings = L10n.shared.s
+        let detail: String
+        switch currentVolumeState {
+        case .muted: detail = strings.mixerOutputMuted
+        case .level(let percent): detail = "\(percent)%"
+        case .unavailable: detail = strings.mixerOutputUnavailable
+        }
+        return "\(strings.mixerSystemOutputTitle): \(detail)"
+    }
+
+    private func bindVolumeIndicatorIfAvailable() {
+        guard volumePlacement != .disabled else {
+            volumeSubscription = nil
+            return
+        }
+        guard volumeSubscription == nil else { return }
+        volumeSubscription = AppVolumeMixer.shared.$systemOutputVolume
+            .combineLatest(AppVolumeMixer.shared.$systemOutputMuted)
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in self?.refresh() }
+    }
+
+    private func syncVolumeIndicator() {
+        guard volumePlacement == .separate else {
+            if let item = volumeStatusItem {
+                volumeStatusItem = nil
+                lastVolumeState = nil
+                NSStatusBar.system.removeStatusItem(item)
+            }
+            return
+        }
+        let item: NSStatusItem
+        if let existing = volumeStatusItem {
+            item = existing
+        } else {
+            item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+            // Register before visibility writes generate defaults notifications.
+            volumeStatusItem = item
+            item.autosaveName = "VorssaintOutputVolume"
+            item.behavior = []
+            item.isVisible = true
+            item.button?.target = self
+            item.button?.action = #selector(volumeIndicatorClicked)
+            item.button?.sendAction(on: [.leftMouseUp, .rightMouseUp])
+        }
+        let mixer = AppVolumeMixer.shared
+        let state = VolumeMenuBarState(volume: mixer.systemOutputVolume, muted: mixer.systemOutputMuted)
+        if lastVolumeState != state {
+            item.button?.image = VolumeMenuBarGlyph.image(for: state)
+            lastVolumeState = state
+        }
+        let description = volumeDescription
+        item.button?.toolTip = description
+        item.button?.setAccessibilityLabel(description)
+    }
+
+    @objc private func volumeIndicatorClicked() {
+        if NSApp.currentEvent?.type == .rightMouseUp {
+            onRightClick?(volumeStatusItem?.button)
+        } else if let button = volumeStatusItem?.button {
+            onVolumeIndicatorClick?(button)
         }
     }
 

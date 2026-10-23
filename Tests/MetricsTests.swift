@@ -44,6 +44,7 @@ struct MetricsTests {
             }),
             ("window-layout", { WindowLayoutFeatureTests.run(suite) }),
             ("media", { MediaFeatureTests.run(suite) }),
+            ("volume-indicator", { VolumeMenuBarIndicatorTests.run(suite) }),
             ("mixer", {
                 MixerNativeDragTests.run(suite)
                 MixerOutputAdjustmentContract.run(suite)

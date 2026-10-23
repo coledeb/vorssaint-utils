@@ -538,6 +538,11 @@ struct MixerSection: View {
 /// both surfaces offer the same switches: idle rows, the headphone guard, the
 /// precise roller, the output switcher and the hidden apps.
 struct MixerOptionsControls: View {
+    @AppStorage(DefaultsKey.mixerMenuBarIndicator)
+    private var menuBarIndicator = false
+    @AppStorage(DefaultsKey.mixerMenuBarReplaceMainIcon)
+    private var replaceMainIcon = false
+
     @ObservedObject private var l10n = L10n.shared
     @ObservedObject private var mixer = AppVolumeMixer.shared
     @ObservedObject private var preciseVolumeRoller = PreciseVolumeRollerService.shared
@@ -557,6 +562,15 @@ struct MixerOptionsControls: View {
         VStack(alignment: .leading, spacing: 8) {
             if AppVolumeMixer.isSupported {
                 inactiveAppsVisibilityToggle
+            }
+            Toggle(l10n.s.mixerMenuBarIndicator, isOn: $menuBarIndicator)
+                .toggleStyle(.checkbox)
+                .font(.system(size: 11.5, weight: .medium))
+            if menuBarIndicator {
+                Toggle(l10n.s.mixerMenuBarReplaceMainIcon, isOn: $replaceMainIcon)
+                    .toggleStyle(.checkbox)
+                    .font(.system(size: 11.5, weight: .medium))
+                    .padding(.leading, 19)
             }
             headphoneDisconnectProtectionToggle
             preciseVolumeRollerToggle

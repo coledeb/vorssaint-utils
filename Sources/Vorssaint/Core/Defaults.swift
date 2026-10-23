@@ -154,6 +154,8 @@ enum DefaultsKey {
     static let mixerAppArrangement = "mixerAppArrangement"
     static let mixerHideInactiveApps = "mixerHideInactiveApps"
     static let mixerHiddenApps = "mixerHiddenApps"        // [persistence id: display name] kept out of the mixer list (issue #300)
+    static let mixerMenuBarReplaceMainIcon = "mixerMenuBarReplaceMainIcon"
+    static let mixerMenuBarIndicator = "mixerMenuBarIndicator"
     static let mixerLowerVolumeOnHeadphonesDisconnect = "mixerLowerVolumeOnHeadphonesDisconnect"
     static let mixerHeadphonesDisconnectVolumePercent = "mixerHeadphonesDisconnectVolumePercent"
     static let mixerHeadphonesDisconnectSilenceAllowed = "mixerHeadphonesDisconnectSilenceAllowed" // one-time: volumes below 10% were rewritten before silence became a choice
@@ -1296,6 +1298,8 @@ enum Defaults {
         DefaultsKey.mixerShowFinder: true,
         DefaultsKey.mixerHideInactiveApps: false,
         DefaultsKey.mixerAppArrangement: "",
+        DefaultsKey.mixerMenuBarIndicator: false,
+        DefaultsKey.mixerMenuBarReplaceMainIcon: false,
         DefaultsKey.mixerLowerVolumeOnHeadphonesDisconnect: false,
         DefaultsKey.mixerHeadphonesDisconnectVolumePercent: defaultMixerHeadphonesDisconnectVolumePercent,
         DefaultsKey.mixerHeadphonesDisconnectSilenceAllowed: false,
