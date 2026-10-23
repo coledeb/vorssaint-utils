@@ -86,6 +86,7 @@ struct MenuPanelView: View {
     @AppStorage(DefaultsKey.panelShowToggles) private var showToggles = true
     @AppStorage(DefaultsKey.panelShowWallpaper) private var showWallpaper = true
     @AppStorage(DefaultsKey.panelSectionOrder) private var sectionOrderRaw = ""
+    @AppStorage(DefaultsKey.panelHideSingleTab) private var hideSingleTab = true
     @State private var navigableContentHeight: CGFloat = 0
     @State private var metricContentHeight: CGFloat = 0
     @State private var updateBannerHeight: CGFloat = 0
@@ -184,12 +185,15 @@ struct MenuPanelView: View {
     /// host already supplies the title and material; one native scroll view
     /// keeps long sections usable without nesting two scroll regions.
     private func embeddedPanel(size: CGSize) -> some View {
-        VStack(spacing: 12) {
-            Group {
-                if let selectedMetric { metricNavigationHeader(selectedMetric) }
-                else { sectionNavigation }
+        let showsNavigation = selectedMetric != nil || showsSectionNavigation
+        return VStack(spacing: 12) {
+            if showsNavigation {
+                Group {
+                    if let selectedMetric { metricNavigationHeader(selectedMetric) }
+                    else { sectionNavigation }
+                }
+                .frame(height: 38)
             }
-            .frame(height: 38)
             OverlayScrollView(measuredHeight: $navigableContentHeight) {
                 Group {
                     if let selectedMetric { MetricDetailView(kind: selectedMetric) }
@@ -199,7 +203,7 @@ struct MenuPanelView: View {
                 .environment(\.notchPresentation, true)
                 .environment(\.colorScheme, .dark)
             }
-            .frame(width: size.width, height: max(0, size.height - 96))
+            .frame(width: size.width, height: max(0, size.height - (showsNavigation ? 96 : 46)))
             footer
         }
         .frame(width: size.width, height: size.height, alignment: .top)
@@ -210,7 +214,9 @@ struct MenuPanelView: View {
             UpdateBanner()
                 .reportHeight($updateBannerHeight)
             header
-            sectionNavigation
+            if showsSectionNavigation {
+                sectionNavigation
+            }
 
             OverlayScrollView(measuredHeight: $navigableContentHeight) {
                 VStack(alignment: .leading, spacing: 12) {
@@ -274,10 +280,14 @@ struct MenuPanelView: View {
         return min(measured, max(80, maxHeight - metricChromeHeight))
     }
 
+    private var showsSectionNavigation: Bool {
+        !hideSingleTab || visibleSections.count > 1
+    }
+
     private var navigableChromeHeight: CGFloat {
         // Equal 12-point outer insets, the measured header, and one stack gap.
         // A selector adds its 38-point row plus another 12-point gap.
-        24 + panelHeaderHeight + 12 + 50 + panelBannerHeight
+        24 + panelHeaderHeight + 12 + (showsSectionNavigation ? 50 : 0) + panelBannerHeight
     }
 
     private var metricChromeHeight: CGFloat {

@@ -9,6 +9,7 @@ import SwiftUI
 struct GeneralToolSettings: View {
     let anchor: SettingsSectionAnchor
     @ObservedObject private var l10n = L10n.shared
+    @AppStorage(DefaultsKey.panelHideSingleTab) private var hideSingleTab = true
 
     private var text: GeneralSettingsStrings { FeatureStrings.generalSettings(l10n.language) }
 
@@ -23,6 +24,14 @@ struct GeneralToolSettings: View {
                             .foregroundStyle(.secondary)
                             .fixedSize(horizontal: false, vertical: true)
                         PanelLayoutEditor()
+                        Divider()
+                        SettingsRow(symbol: "rectangle.topthird.inset.filled",
+                                    title: text.hideSingleTabTitle,
+                                    caption: text.hideSingleTabCaption) {
+                            Toggle(text.hideSingleTabTitle, isOn: $hideSingleTab)
+                                .labelsHidden()
+                                .toggleStyle(.switch)
+                        }
                         Divider()
                         MenuBarIconSymbolRow()
                         Divider()

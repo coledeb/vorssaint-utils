@@ -228,6 +228,7 @@ private struct PanelSectionRow: View {
 /// current order. Nothing in it is fake data; the open tab is a title over
 /// placeholder lines.
 private struct MenuBarPanelMiniature: View {
+    @AppStorage(DefaultsKey.panelHideSingleTab) private var hideSingleTab = true
     let sections: [PanelSectionID]
     let active: PanelSectionID?
     let onSelect: (PanelSectionID) -> Void
@@ -284,7 +285,9 @@ private struct MenuBarPanelMiniature: View {
                     .accessibilityHidden(true)
                 headerActions
             }
-            tabStrip
+            if !hideSingleTab || sections.count > 1 {
+                tabStrip
+            }
             openTab
         }
         .padding(Self.padding)

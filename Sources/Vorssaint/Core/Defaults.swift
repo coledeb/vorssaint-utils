@@ -499,6 +499,7 @@ enum DefaultsKey {
     static let panelDiskOrder = "panelDiskOrder"
     static let panelPowerOrder = "panelPowerOrder"
     static let panelNavigationEnabled = "panelNavigationEnabled" // legacy: the panel always navigates by sections since 3.1.8
+    static let panelHideSingleTab = "panelHideSingleTab"
     static let updateLastInstallFailure = "updateLastInstallFailure" // last installer step that failed (fail-copy etc.)
     static let windowLayoutHiddenActions = "windowLayoutHiddenActions" // comma-separated action ids hidden from the grid
     static let windowLayoutWindowGap = "windowLayoutWindowGap" // px between adjacent snapped windows
@@ -1671,6 +1672,7 @@ enum Defaults {
         DefaultsKey.fanControlRecoveryNeeded: false,
         DefaultsKey.fanControlHelperVersion: "",
         DefaultsKey.panelNavigationEnabled: true,
+        DefaultsKey.panelHideSingleTab: true,
         DefaultsKey.monitorGraphCPU: true,
         DefaultsKey.monitorGraphGPU: true,
         DefaultsKey.monitorGraphMemory: true,
