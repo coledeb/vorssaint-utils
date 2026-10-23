@@ -89,6 +89,7 @@ struct MenuPanelView: View {
     @State private var navigableContentHeight: CGFloat = 0
     @State private var metricContentHeight: CGFloat = 0
     @State private var updateBannerHeight: CGFloat = 0
+    @State private var panelHeaderHeight: CGFloat = 30
     @State private var selectedSection: PanelSectionID = PanelLayout.order.first ?? .keepAwake
     @State private var selectedMetric: MetricDetailKind?
     @FocusState private var focusedSection: PanelSectionID?
@@ -220,7 +221,8 @@ struct MenuPanelView: View {
             .frame(width: 308, height: navigableScrollHeight)
         }
         .padding(12)
-        .frame(width: 332, height: navigablePanelHeight)
+        .frame(width: 332)
+        .fixedSize(horizontal: false, vertical: true)
         .panelGlassSurface()
     }
 
@@ -240,7 +242,8 @@ struct MenuPanelView: View {
             }
         }
         .padding(12)
-        .frame(width: 332, height: metricPanelHeight)
+        .frame(width: 332)
+        .fixedSize(horizontal: false, vertical: true)
         .panelGlassSurface()
     }
 
@@ -266,24 +269,24 @@ struct MenuPanelView: View {
         return min(measured, max(80, maxHeight - navigableChromeHeight))
     }
 
-    private var navigablePanelHeight: CGFloat {
-        min(maxHeight, max(220, navigableScrollHeight + navigableChromeHeight))
-    }
-
     private var metricScrollHeight: CGFloat {
         let measured = metricContentHeight == 0 ? estimatedMetricContentHeight : metricContentHeight
-        return min(measured, max(80, maxHeight - navigableChromeHeight))
-    }
-
-    private var metricPanelHeight: CGFloat {
-        min(maxHeight, max(220, metricScrollHeight + navigableChromeHeight))
+        return min(measured, max(80, maxHeight - metricChromeHeight))
     }
 
     private var navigableChromeHeight: CGFloat {
-        let bannerHeight = updates.state.showsMenuPanelBanner
-            ? (max(updateBannerHeight, 48) + 12)
-            : 0
-        return 180 + bannerHeight
+        // Equal 12-point outer insets, the measured header, and one stack gap.
+        // A selector adds its 38-point row plus another 12-point gap.
+        24 + panelHeaderHeight + 12 + 50 + panelBannerHeight
+    }
+
+    private var metricChromeHeight: CGFloat {
+        // Metric navigation is 24 points high, with a gap on either side.
+        24 + panelHeaderHeight + 24 + 24 + panelBannerHeight
+    }
+
+    private var panelBannerHeight: CGFloat {
+        updates.state.showsMenuPanelBanner ? max(updateBannerHeight, 48) + 12 : 0
     }
 
     private var estimatedNavigableContentHeight: CGFloat {
@@ -449,6 +452,7 @@ struct MenuPanelView: View {
 
     private var header: some View {
         MenuPanelHeader(actions: panelActions)
+            .reportHeight($panelHeaderHeight)
     }
 
     // Embedded panels keep actions at the bottom because their host supplies
