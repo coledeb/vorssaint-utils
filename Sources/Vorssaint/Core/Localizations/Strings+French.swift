@@ -619,6 +619,7 @@ extension Strings {
         mixerSystemOutputTooltip: "Choisir la sortie système",
         mixerSystemOutputErrorFormat: "Impossible de changer\u{00A0}: %@",
         mixerMenuBarReplaceMainIcon: "Remplacer l’icône principale de la barre des menus",
+        mixerAlertVolumeUnavailable: "Volume des alertes indisponible",
         mixerMenuBarIndicator: "Afficher le volume de sortie dans la barre des menus",
         mixerOutputMuted: "Sortie en sourdine",
         mixerLowerOnHeadphonesDisconnect: "Baisser le volume quand les écouteurs se déconnectent",

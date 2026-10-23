@@ -619,6 +619,7 @@ extension Strings {
         mixerSystemOutputTooltip: "システム出力を選択",
         mixerSystemOutputErrorFormat: "変更できませんでした: %@",
         mixerMenuBarReplaceMainIcon: "メニューバーのメインアイコンを置き換える",
+        mixerAlertVolumeUnavailable: "通知音量を利用できません",
         mixerMenuBarIndicator: "メニューバーに出力音量を表示",
         mixerOutputMuted: "出力は消音中",
         mixerLowerOnHeadphonesDisconnect: "ヘッドフォン切断時に音量を下げる",

@@ -601,6 +601,7 @@ extension Strings {
         mixerSystemOutputTooltip: "Вибрати системний пристрій виведення",
         mixerSystemOutputErrorFormat: "Не вдалося перемкнути: %@",
         mixerMenuBarReplaceMainIcon: "Замінити основну піктограму в рядку меню",
+        mixerAlertVolumeUnavailable: "Гучність сповіщень недоступна",
         mixerMenuBarIndicator: "Показувати гучність виводу в рядку меню",
         mixerOutputMuted: "Звук виводу вимкнено",
         mixerLowerOnHeadphonesDisconnect: "Знижувати гучність при від’єднанні навушників",

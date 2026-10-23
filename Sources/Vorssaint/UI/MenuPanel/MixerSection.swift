@@ -11,6 +11,7 @@ import SwiftUI
 struct MixerSection: View {
     @Environment(\.notchPresentation) private var inNotch
     @ObservedObject private var l10n = L10n.shared
+    @ObservedObject private var alertVolume = SystemAlertVolume.shared
     @ObservedObject private var mixer = AppVolumeMixer.shared
     @ObservedObject private var inputManager = AudioInputDeviceManager.shared
     @ObservedObject private var audioPriority = AudioPriorityService.shared
@@ -53,7 +54,11 @@ struct MixerSection: View {
         .onReceive(NotificationCenter.default.publisher(for: Notification.Name("NSSystemColorsDidChangeNotification"))) { _ in
             refreshSliderTint()
         }
-        .onAppear { mixer.refreshApps() }
+        .onAppear {
+            mixer.refreshApps()
+            alertVolume.attach()
+        }
+        .onDisappear { alertVolume.detach() }
     }
 
     private var mixerControls: some View {
@@ -116,6 +121,52 @@ struct MixerSection: View {
                     .padding(.leading, 19)
             }
         }
+    }
+
+    private func controlIcon(_ symbol: String) -> some View {
+        Image(systemName: symbol)
+            .font(.system(size: 10.5, weight: .semibold))
+            .foregroundStyle(.secondary)
+            .frame(width: 16)
+            .accessibilityHidden(true)
+    }
+
+    private func volumeControl(_ volume: Double?, binding: Binding<Double>,
+                               title: String, editorID: String) -> some View {
+        HStack(spacing: 8) {
+            if volume != nil {
+                MixerVolumeSlider(value: binding,
+                                  normalTint: normalSliderTint,
+                                  boostTint: normalSliderTint,
+                                  isBoosting: false,
+                                  accentRevision: accentRevision,
+                                  glassEnabled: glassEnabled,
+                                  maximum: 1,
+                                  accessibilityLabel: title)
+            } else {
+                // Reserve the slider column without constructing a thumb at 0.
+                // When the read finishes, create it directly at the real level.
+                Color.clear.frame(height: 18).accessibilityHidden(true)
+            }
+            EditableVolumePercent(currentPercent: MixerRoutingSupport.displayPercent(forVolume: volume ?? 0),
+                                  maximumPercent: 100, width: 36,
+                                  editorID: editorID,
+                                  editingID: $editingVolumeID, accessibilityLabel: title) {
+                Text(volume.map { "\(MixerRoutingSupport.displayPercent(forVolume: $0))%" } ?? "—")
+                    .font(.system(size: 10.5, weight: .medium))
+                    .monospacedDigit()
+                    .foregroundStyle(.secondary)
+            } onCommit: { binding.wrappedValue = $0 }
+        }
+        .frame(maxWidth: .infinity)
+        .disabled(volume == nil)
+    }
+
+    private var alertVolumeControl: some View {
+        volumeControl(alertVolume.volume,
+                      binding: Binding(get: { alertVolume.volume ?? 0 }, set: { alertVolume.setVolume($0) }),
+                      title: l10n.s.mixerSoundEffectsOutputTitle, editorID: "system-alerts")
+            .help(alertVolume.unavailable ? l10n.s.mixerAlertVolumeUnavailable : l10n.s.mixerSoundEffectsOutputTitle)
     }
 
     private var universalOutputPicker: some View {
@@ -233,6 +284,11 @@ struct MixerSection: View {
                 .frame(width: 164)
                 .disabled(systemSoundOutputDevices.isEmpty)
                 .help(l10n.s.mixerSoundEffectsOutputTooltip)
+            }
+
+            HStack(spacing: 8) {
+                controlIcon("bell.fill")
+                alertVolumeControl
             }
 
             if systemSoundOutputDevices.isEmpty {

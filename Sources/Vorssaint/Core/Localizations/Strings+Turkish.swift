@@ -619,6 +619,7 @@ extension Strings {
         mixerSystemOutputTooltip: "Sistem çıkışını seç",
         mixerSystemOutputErrorFormat: "Geçiş yapılamadı: %@",
         mixerMenuBarReplaceMainIcon: "Ana menü çubuğu simgesini değiştir",
+        mixerAlertVolumeUnavailable: "Uyarı ses düzeyi kullanılamıyor",
         mixerMenuBarIndicator: "Menü çubuğunda çıkış ses düzeyini göster",
         mixerOutputMuted: "Çıkış sessize alındı",
         mixerLowerOnHeadphonesDisconnect: "Kulaklık bağlantısı kesilince sesi düşür",

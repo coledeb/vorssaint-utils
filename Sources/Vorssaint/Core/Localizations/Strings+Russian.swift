@@ -620,6 +620,7 @@ extension Strings {
         mixerSystemOutputTooltip: "Выбрать системный выход",
         mixerSystemOutputErrorFormat: "Не удалось переключить: %@",
         mixerMenuBarReplaceMainIcon: "Заменить основной значок в строке меню",
+        mixerAlertVolumeUnavailable: "Громкость уведомлений недоступна",
         mixerMenuBarIndicator: "Показывать громкость вывода в строке меню",
         mixerOutputMuted: "Звук вывода выключен",
         mixerLowerOnHeadphonesDisconnect: "Снижать громкость при отключении наушников",

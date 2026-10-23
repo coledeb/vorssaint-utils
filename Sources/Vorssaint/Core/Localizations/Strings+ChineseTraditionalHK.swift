@@ -620,6 +620,7 @@ extension Strings {
         mixerSystemOutputTooltip: "選取系統輸出",
         mixerSystemOutputErrorFormat: "無法切換：%@",
         mixerMenuBarReplaceMainIcon: "取代選單列主圖像",
+        mixerAlertVolumeUnavailable: "無法使用提示音音量",
         mixerMenuBarIndicator: "在選單列顯示輸出音量",
         mixerOutputMuted: "輸出已靜音",
         mixerLowerOnHeadphonesDisconnect: "耳機中斷連接時降低音量",

@@ -619,6 +619,7 @@ extension Strings {
         mixerSystemOutputTooltip: "Systemausgabe wählen",
         mixerSystemOutputErrorFormat: "Wechsel fehlgeschlagen: %@",
         mixerMenuBarReplaceMainIcon: "Hauptsymbol in der Menüleiste ersetzen",
+        mixerAlertVolumeUnavailable: "Hinweislautstärke nicht verfügbar",
         mixerMenuBarIndicator: "Ausgabelautstärke in der Menüleiste anzeigen",
         mixerOutputMuted: "Ausgabe stummgeschaltet",
         mixerLowerOnHeadphonesDisconnect: "Lautstärke senken, wenn Kopfhörer getrennt werden",

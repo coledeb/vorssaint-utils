@@ -291,6 +291,7 @@ final class FeatureRuntime: ObservableObject {
         .urlCleaner: { URLCleanerService.shared.syncWithPreferences() },
         .diskImageInstaller: { DiskImageInstallerService.shared.syncWithPreferences() },
         .mixer: {
+            if AppFeature.mixer.isAvailable { SystemAlertVolume.shared.prepare() }
             PreciseVolumeRollerService.shared.syncWithPreferences()
             AppVolumeMixer.shared.syncWithPreferences()
             AudioInputDeviceManager.shared.syncWithPreferences()

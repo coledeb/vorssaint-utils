@@ -619,6 +619,7 @@ extension Strings {
         mixerSystemOutputTooltip: "选择系统输出",
         mixerSystemOutputErrorFormat: "无法切换：%@",
         mixerMenuBarReplaceMainIcon: "替换菜单栏主图标",
+        mixerAlertVolumeUnavailable: "提示音音量不可用",
         mixerMenuBarIndicator: "在菜单栏显示输出音量",
         mixerOutputMuted: "输出已静音",
         mixerLowerOnHeadphonesDisconnect: "耳机断开时降低音量",
