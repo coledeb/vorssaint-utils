@@ -427,7 +427,10 @@ final class StatusItemController {
             stateImage = BlackHoleGlyph.image(active: keepAwakeActive)
         }
         if micBadgeActive {
-            button.image = BlackHoleGlyph.micMutedImage(over: stateImage, cozySpacing: micCozySpacing) ?? stateImage
+            button.image = BlackHoleGlyph.micMutedImage(
+                over: stateImage, cozySpacing: micCozySpacing,
+                spacingReference: volumeState != nil ? VolumeMenuBarGlyph.micBadgeSpacingReference : nil
+            ) ?? stateImage
         } else {
             button.image = stateImage
         }
@@ -1129,7 +1132,8 @@ enum BlackHoleGlyph {
     /// is a real color, so the composite can't stay a template image; the
     /// drawing handler runs against the destination appearance, which keeps a
     /// template underlying glyph legible on both light and dark menu bars.
-    static func micMutedImage(over underlying: NSImage?, cozySpacing: Bool = false) -> NSImage? {
+    static func micMutedImage(over underlying: NSImage?, cozySpacing: Bool = false,
+                              spacingReference: NSImage? = nil) -> NSImage? {
         guard let underlying else { return nil }
         guard let badge = NSImage(systemSymbolName: "mic.slash.fill",
                                   accessibilityDescription: nil)?
@@ -1138,7 +1142,8 @@ enum BlackHoleGlyph {
         let badgeSize = badge.size
         // Space the visible shapes, not their padded image canvases. This
         // stays compact even when macOS's spacing between items is reduced.
-        let glyphInk = (cozySpacing ? inkBounds(of: underlying) : nil) ?? NSRect(origin: .zero, size: underlying.size)
+        let glyphInk = (cozySpacing ? inkBounds(of: spacingReference ?? underlying) : nil)
+            ?? NSRect(origin: .zero, size: underlying.size)
         let badgeInk = (cozySpacing ? inkBounds(of: badge) : nil) ?? NSRect(origin: .zero, size: badgeSize)
         let badgeStart = glyphInk.maxX + gap
         let badgeX = badgeStart - badgeInk.minX

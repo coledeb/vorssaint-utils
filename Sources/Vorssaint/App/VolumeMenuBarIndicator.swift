@@ -40,6 +40,9 @@ enum VolumeMenuBarState: Equatable, Hashable {
 
 enum VolumeMenuBarGlyph {
     static let size = NSSize(width: 24, height: 20)
+    /// Keep the mic badge anchored to the same right edge when waves turn
+    /// into the narrower mute mark (or the volume becomes unavailable).
+    static let micBadgeSpacingReference = image(for: .level(67))
 
     static func image(for state: VolumeMenuBarState) -> NSImage {
         let image = NSImage(size: size, flipped: false) { _ in
