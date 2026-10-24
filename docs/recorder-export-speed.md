@@ -13,9 +13,9 @@ The exporter reads but does not retime or rewrite the master recording. Existing
 Run on a supported Mac:
 
 ```sh
-./build.sh --test-suite=recorder
-./build.sh --dev
-./build/Vorssaint --selftest
+python3 Tools/build-local.py --test-suite=recorder
+python3 Tools/build-local.py --dev
+build/stage.noindex/Vorssaint.app/Contents/MacOS/Vorssaint --selftest
 ```
 
 `RecorderExportSpeedTests` is registered in the recorder suite and covers legacy decoding, custom-speed persistence, invalid values and bounds, inverse clock conversion, trim/cut ordering, unchanged preview timing, visual presets and GIF sampling. The recorder suite also runs `RecorderExportRenderingTests` through the production AVFoundation exporter. Synthetic video and two audio tracks cover fractional and endpoint speeds, trim and cut boundaries, blur coverage and clear frames, duration, delayed microphone, silence, pitch, gain, mute, a 30-second GIF at 15 fps, GIF size against the single encoder, frames that do not decode, clipboard copying within and past the inline limit, progress pacing and cancellation. `RecorderGIFWriterTests` covers chunk boundaries, palette changes, transparency, compactness, timing, malformed frame data and temporary-file leases. These checks do not exercise native control layout or physical capture hardware.
@@ -27,4 +27,4 @@ Run on a supported Mac:
 - Export a 10-second GIF at 12 fps and 2×: expect 60 sampled frames and approximately 5 seconds. Save and copy a GIF longer than 25 seconds at 12 fps and longer than 20 seconds at 15 fps; verify its closing frames and duration. Verify cancellation leaves any previous destination intact. Exercise normal save, Save As, copy and sharing.
 - Check the speed control in English and Portuguese at the editor's minimum width, with a cut selected. Verify 1.25× / 1,25× labels, 0.01× steps, the duration display, Done, Cancel, undo/redo and disabled controls during export. Changing export speed must not speed up the editing preview or change the master.
 
-Automated export regressions, the installed Developer build, selftest and strict signature verification were validated on macOS during integration. The optimized build and its selftest also passed. Manual control layout and physical capture hardware remain separate smoke checks.
+Upstream’s integration record reports automated export regressions, its installed Developer build, selftest and strict signature verification on macOS. Upstream’s optimized build and selftest also passed during that integration. Manual control layout and physical capture hardware remain separate smoke checks.

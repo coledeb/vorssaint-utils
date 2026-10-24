@@ -6,11 +6,11 @@ Thanks for helping keep Vorssaint and the people who use it safe.
 
 Please report security vulnerabilities in private. Do not open a public issue, pull request or discussion for them.
 
-Use GitHub's private vulnerability reporting for this repository.
+Private vulnerability reporting is not currently enabled on this fork, and no fork-specific private reporting channel is documented. The link below is the original project’s private reporting channel for vulnerabilities affecting upstream; it does not go to this fork’s maintainer.
 
-- **[Report a vulnerability privately](https://github.com/vorssaint/vorssaint-utils/security/advisories/new)**
+- **[Report an upstream vulnerability privately](https://github.com/vorssaint/vorssaint-utils/security/advisories/new)**
 
-That opens a private security advisory that only you and the maintainer can see.
+That opens a private security advisory in the upstream repository, rather than this fork.
 
 When you write it up, please include as much as you can.
 
@@ -26,8 +26,8 @@ When you write it up, please include as much as you can.
 
 ## Supported versions
 
-Security fixes land on the latest released version. Before you report, please make sure you can reproduce the issue on the most recent release.
+This fork is distributed as source and has no published releases. Check the latest fork `main` when investigating a fork issue. For a report to upstream, verify it against the latest official upstream release and identify any fork-specific differences.
 
 ## Scope
 
-Vorssaint runs locally and ships as a signed and notarized macOS app. The reports that matter most are the ones that could affect the integrity of the app or its self update flow, or that could let the app's permissions be misused. Issues in the outside services the app merely talks to, like GitHub's releases API or the speed test endpoint, are best taken to those providers.
+Vorssaint runs locally. Official upstream releases are Developer ID signed and notarized; this fork’s local build helper uses ad-hoc signing, and upstream self-updates are disabled for the fork. The reports that matter most are the ones that could affect the integrity of the app or its self update flow, or that could let the app's permissions be misused. Issues in the outside services the app merely talks to, like GitHub's releases API or the speed test endpoint, are best taken to those providers.

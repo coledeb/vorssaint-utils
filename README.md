@@ -291,7 +291,7 @@ licensing and branding notices.
 
 ## When something misbehaves
 
-See [troubleshooting](docs/TROUBLESHOOTING.md) for launch problems, permissions and missing previews. The [upstream support guide](SUPPORT.md) covers the original project; this fork currently has no separate issue tracker.
+See [troubleshooting](docs/TROUBLESHOOTING.md) for launch problems, permissions and missing previews. The [support guide](SUPPORT.md) explains the current fork and upstream reporting options.
 
 ## Documentation
 
@@ -299,7 +299,7 @@ See [troubleshooting](docs/TROUBLESHOOTING.md) for launch problems, permissions 
 - [Permissions](docs/PERMISSIONS.md), every macOS permission in plain words
 - [Troubleshooting](docs/TROUBLESHOOTING.md), the common fixes
 - [Contributing](CONTRIBUTING.md), build, layout and conventions
-- [Support](SUPPORT.md), where to get help
+- [Support](SUPPORT.md), fork and upstream support availability
 - [Security](SECURITY.md), how to report a vulnerability
 
 ## Community

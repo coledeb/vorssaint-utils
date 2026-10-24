@@ -11,6 +11,19 @@ Vorssaint is built to be local-first. Core features run on your Mac, and the app
 - **No data selling.** Vorssaint never sells personal information or shared screenshots and recordings.
 - **Your settings stay put.** Preferences and saved state live in the app's own local storage on your Mac and are never uploaded.
 
+## Fork identity and inherited services
+
+This fork uses `com.coledeb.vorssaint.utils` for its preferences and private local
+storage, separate from upstream's `com.vorssaint.utils`. Installing at the same
+`/Applications/Vorssaint.app` path replaces the app bundle without deleting or
+importing upstream preferences or data. Portable settings can be copied once
+from the previous local development domain, `com.vorssaint.utils.dev`; its stored
+history, folder grants and system recovery state are not moved.
+
+The online services described below are inherited from upstream, not operated
+by the fork maintainer. Optional screenshot/recording sharing and submitted
+feedback still use their upstream endpoints.
+
 ## What it reads, and where that stays
 
 Everything Vorssaint shows you, from the CPU and memory load to the temperatures, the battery details, the network rates, the window list, per app volume and the files on the Shelf, is read locally through native macOS APIs and shown to you right there. Those readings are not uploaded automatically. Optional online lyric and cover lookups send only what is described below.
@@ -47,7 +60,7 @@ Covers for Firefox-based browsers are off until you turn on Find covers for Fire
 
 Vorssaint opens only a few kinds of connection, and each one belongs to a visible feature.
 
-1. **The update check, automatic and easy to switch off.** So it can tell you when a newer version exists, Vorssaint asks GitHub's public releases API at `api.github.com` for this project's latest release. The request carries only a standard user agent with the app name and its version, and no account, identifier or usage data go along with it. It runs a short while after launch and now and then while the app is open. You can turn it off in Settings under About, and once it is off no update requests are made. If you choose to install an offered update, the disk image comes from GitHub.
+1. **Self-update checks are disabled for this fork.** Builds identified as `com.coledeb.vorssaint.utils` do not check or install the original app's GitHub releases. Update the fork by pulling its source and rebuilding. The separate App updates feature described below can still check other installed apps when enabled.
 
 2. **The internet speed test, only when you ask.** The optional speed test in the Network section reaches Cloudflare's public speed endpoints at `speed.cloudflare.com` to measure latency and your download and upload throughput. This happens only when you start a test yourself, and never on its own.
 
@@ -95,4 +108,4 @@ This page describes how the current version of Vorssaint behaves. If the app's b
 
 ## Questions
 
-If anything here is unclear, open a question in [GitHub issues](https://github.com/vorssaint/vorssaint-utils/issues), or have a look at [support](../SUPPORT.md).
+See [support](../SUPPORT.md) for the current support-channel status. The [upstream issue tracker](https://github.com/vorssaint/vorssaint-utils/issues) belongs to the original project, not this fork.

@@ -1,16 +1,16 @@
 # Support
 
-Vorssaint is a free and open source project, looked after on a best effort basis. There is no support contract and no promised response time, though every issue and question gets read and appreciated.
+This is Cole’s personal fork of Vorssaint. Support is best effort, with no support contract or promised response time. The fork currently has no issue tracker or discussions enabled. The upstream links below belong to the original project and do not provide a dedicated support channel for this fork.
 
 Before you reach out, the [documentation](#documentation) below answers most of what comes up, and the [troubleshooting guide](docs/TROUBLESHOOTING.md) covers the usual fixes.
 
 ## Report a bug
 
-Open the bug report form from the [new issue](https://github.com/vorssaint/vorssaint-utils/issues/new/choose) page. Please bring your Vorssaint version from Settings under About, your macOS version, and clear steps to reproduce. The notes on [reporting a useful bug](docs/TROUBLESHOOTING.md#reporting-a-useful-bug) spell out what helps.
+For a bug reproducible in the official upstream app, open the upstream bug report form from the [new issue](https://github.com/vorssaint/vorssaint-utils/issues/new/choose) page. Please identify whether you are running the fork or upstream, include the fork commit when relevant, and bring your Vorssaint version from Settings under About, your macOS version, and clear steps to reproduce. The notes on [reporting a useful bug](docs/TROUBLESHOOTING.md#reporting-a-useful-bug) spell out what helps.
 
 ## Request a feature
 
-Open the feature request form from the same [new issue](https://github.com/vorssaint/vorssaint-utils/issues/new/choose) page. Describe the problem you want solved rather than only a specific solution, since that makes the need much clearer. You can also browse and back existing ideas in the [open issues](https://github.com/vorssaint/vorssaint-utils/issues).
+For a feature request for the original project, open the upstream feature request form from the same [new issue](https://github.com/vorssaint/vorssaint-utils/issues/new/choose) page. Describe the problem you want solved rather than only a specific solution, since that makes the need much clearer. You can also browse and back existing ideas in the [open issues](https://github.com/vorssaint/vorssaint-utils/issues).
 
 ## Report a security issue
 

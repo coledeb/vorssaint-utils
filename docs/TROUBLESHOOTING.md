@@ -2,11 +2,11 @@
 
 A quick guide to the snags people hit most. If none of it helps, jump to [reporting a useful bug](#reporting-a-useful-bug) at the end.
 
-The permission and uninstall commands below all point at Vorssaint's bundle identifier, `com.vorssaint.utils`.
+The permission and uninstall commands below target this fork, `com.coledeb.vorssaint.utils`. The official app uses `com.vorssaint.utils`; its settings, data and permissions are separate, even when the app name and install path are the same.
 
 ## The app will not open
 
-Official Vorssaint builds are signed with an Apple Developer ID and notarized, so they open with no security warning.
+Official upstream Vorssaint releases use Developer ID signing and notarization. This fork currently has no published app releases; builds from `Tools/build-local.py` are ad-hoc signed and are not notarized.
 
 If you built the app yourself or grabbed an unofficial copy, macOS Gatekeeper may stop it on the first launch. To open it anyway, do one of these.
 
@@ -106,7 +106,7 @@ The bundled script takes out everything Vorssaint added, the app itself, its pre
 ./Tools/uninstall.sh
 ```
 
-Run it from a clone of the repository, or download the single script from the repo. Would you rather do it by hand? Quit Vorssaint, drag it from Applications to the Trash, then clear its permissions.
+Run it from a clone of this fork: the script also needs `Tools/stop-app.sh` beside it. It checks the installed bundle ID and refuses to remove the official app. Upstream settings and stored data are left intact. Would you rather do it by hand? Quit Vorssaint, drag it from Applications to the Trash, then clear its permissions.
 
 ```sh
 tccutil reset All com.coledeb.vorssaint.utils
@@ -124,7 +124,7 @@ A clear report gets fixed faster. Try to include the following.
 If you have a build from source, the self test prints a quick health summary that is handy to paste in.
 
 ```sh
-./build/Vorssaint --selftest
+build/stage.noindex/Vorssaint.app/Contents/MacOS/Vorssaint --selftest
 ```
 
-Open a report from the [new issue](https://github.com/vorssaint/vorssaint-utils/issues/new/choose) page, and see [support](../SUPPORT.md) for every way to get help.
+This fork currently has no issue tracker. See [support](../SUPPORT.md) for the distinction between this fork and upstream reports. The [upstream issue forms](https://github.com/vorssaint/vorssaint-utils/issues/new/choose) are for the original project; identify the fork and reproduce there before treating a problem as an upstream bug.
