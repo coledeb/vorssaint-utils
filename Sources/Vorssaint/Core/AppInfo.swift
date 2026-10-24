@@ -19,10 +19,11 @@ enum AppInfo {
         Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "dev"
     }
 
-    /// True for the local "Vorssaint (Developer)" build (bundle id ends in `.dev`).
+    /// The personal fork and local upstream development builds never self-update.
     /// It is never published and never auto-updates; all work is tested here first.
     static var isDeveloperBuild: Bool {
-        (Bundle.main.bundleIdentifier ?? "").hasSuffix(".dev")
+        Bundle.main.bundleIdentifier == "com.coledeb.vorssaint.utils"
+            || (Bundle.main.bundleIdentifier ?? "").hasSuffix(".dev")
     }
 
     /// True when the current version is a pre-release (e.g. 3.3.4-beta.1 or 3.3.4-rc.1).

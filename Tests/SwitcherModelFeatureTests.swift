@@ -4392,6 +4392,7 @@ enum SwitcherModelFeatureTests {
                "an accidental double-click never hides and immediately reopens the app")
         suite.expect(DockClickSupport.isOwnBundleIdentifier("com.vorssaint.utils")
                 && DockClickSupport.isOwnBundleIdentifier("com.vorssaint.utils.dev")
+                && DockClickSupport.isOwnBundleIdentifier("com.coledeb.vorssaint.utils")
                 && !DockClickSupport.isOwnBundleIdentifier("com.example.editor")
                 && !DockClickSupport.isOwnBundleIdentifier(nil),
                "Dock clicks never target either build of this app")

@@ -13,6 +13,15 @@ import VMStatisticsCompat
 
 enum PreferencesFeatureTests {
     static func run(_ suite: TestSuite) {
+        let forkSettings = Defaults.forkPreferencesToMigrate(
+            legacy: [DefaultsKey.language: "fr", DefaultsKey.mixerCozyVolumeControls: true,
+                     "unrecognizedRecoveryJournal": "must stay with old app"],
+            existing: [DefaultsKey.language: "en"])
+        suite.expect(forkSettings[DefaultsKey.mixerCozyVolumeControls] as? Bool == true
+                && forkSettings[DefaultsKey.language] == nil
+                && forkSettings["unrecognizedRecoveryJournal"] == nil,
+                     "fork migration carries portable settings without overwriting choices or copying recovery state")
+
         // MARK: Registered defaults
 
         let registeredDefaults = Defaults.registeredDefaults

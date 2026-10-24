@@ -83,18 +83,18 @@ To wipe Vorssaint's granted permissions and let macOS ask again from scratch, pi
 - **From Terminal.** Reset all of Vorssaint's privacy permissions at once.
 
   ```sh
-  tccutil reset All com.vorssaint.utils
+  tccutil reset All com.coledeb.vorssaint.utils
   ```
 
   Or reset a single kind, for example.
 
   ```sh
-  tccutil reset Accessibility com.vorssaint.utils
-  tccutil reset ScreenCapture com.vorssaint.utils
+  tccutil reset Accessibility com.coledeb.vorssaint.utils
+  tccutil reset ScreenCapture com.coledeb.vorssaint.utils
   ```
 
-  A self-built Developer variant has its own grants under
-  `com.vorssaint.utils.dev`. Resetting is the way out when System Settings
+  This fork has its own grants under
+  `com.coledeb.vorssaint.utils`. Resetting is the way out when System Settings
   shows the permission as granted but the app disagrees — that happens when a
   grant was given to an earlier ad-hoc build whose signature no longer matches.
 
@@ -109,7 +109,7 @@ The bundled script takes out everything Vorssaint added, the app itself, its pre
 Run it from a clone of the repository, or download the single script from the repo. Would you rather do it by hand? Quit Vorssaint, drag it from Applications to the Trash, then clear its permissions.
 
 ```sh
-tccutil reset All com.vorssaint.utils
+tccutil reset All com.coledeb.vorssaint.utils
 ```
 
 ## Reporting a useful bug

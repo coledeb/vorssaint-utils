@@ -26,8 +26,8 @@ trap cleanup EXIT
 # into the build sweeps like any other ending.
 trap 'exit 1' INT TERM HUP
 
-# Flags: --dev builds the local-only "Vorssaint (Developer)" variant (its own
-# bundle id, so it coexists with the official app); --install puts it in /Applications.
+# Flags: --dev enables local debugging; every build uses Cole's fork identity.
+# --install uses /Applications/Vorssaint.app.
 DEV=0
 INSTALL=0
 TEST=0
@@ -43,16 +43,16 @@ for arg in "$@"; do
 done
 
 if (( DEV )); then
-    APP_NAME="Vorssaint (Developer)"
-    EXECUTABLE="VorssaintDeveloper"
-    APP_BUNDLE_ID="com.vorssaint.utils.dev"
+    APP_NAME="Vorssaint"
+    EXECUTABLE="Vorssaint"
+    APP_BUNDLE_ID="com.coledeb.vorssaint.utils"
     BUILD_VARIANT_FLAGS=(-D VORSSAINT_DEVELOPMENT)
     APP_OPTIMIZATION_FLAGS=(-Onone)
     BUILD_CONFIGURATION="debug"
 else
     APP_NAME="Vorssaint"
     EXECUTABLE="Vorssaint"
-    APP_BUNDLE_ID="com.vorssaint.utils"
+    APP_BUNDLE_ID="com.coledeb.vorssaint.utils"
     BUILD_VARIANT_FLAGS=()
     APP_OPTIMIZATION_FLAGS=(-O)
     BUILD_CONFIGURATION="release"
@@ -689,18 +689,17 @@ cp CHANGELOG.md "$STAGE/Contents/Resources/CHANGELOG.md"
 for lproj in Resources/*.lproj(N); do
     cp -R "$lproj" "$STAGE/Contents/Resources/"
 done
+# Apply the fork identity to debug and release bundles and their helper.
+/usr/libexec/PlistBuddy -c "Set :CFBundleIdentifier $APP_BUNDLE_ID" "$STAGE/Contents/Info.plist"
+/usr/libexec/PlistBuddy -c "Set :CFBundleName $APP_NAME" "$STAGE/Contents/Info.plist"
+/usr/libexec/PlistBuddy -c "Set :CFBundleDisplayName $APP_NAME" "$STAGE/Contents/Info.plist"
+/usr/libexec/PlistBuddy -c "Set :CFBundleExecutable $EXECUTABLE" "$STAGE/Contents/Info.plist"
+FAN_PLIST="$STAGE/Contents/Library/LaunchDaemons/$FAN_HELPER_ID.plist"
+/usr/libexec/PlistBuddy -c "Set :Label $FAN_HELPER_ID" "$FAN_PLIST"
+/usr/libexec/PlistBuddy -c "Set :BundleProgram Contents/Library/LaunchServices/$FAN_HELPER_ID" "$FAN_PLIST"
+/usr/libexec/PlistBuddy -c "Delete :MachServices:com.vorssaint.utils.fan-control" "$FAN_PLIST"
+/usr/libexec/PlistBuddy -c "Add :MachServices:$FAN_HELPER_ID bool true" "$FAN_PLIST"
 if (( DEV )); then
-    # A distinct identity so the Developer build installs and runs next to the
-    # official app, with its own permissions, preferences and login item.
-    /usr/libexec/PlistBuddy -c "Set :CFBundleIdentifier $APP_BUNDLE_ID" "$STAGE/Contents/Info.plist"
-    /usr/libexec/PlistBuddy -c "Set :CFBundleName $APP_NAME" "$STAGE/Contents/Info.plist"
-    /usr/libexec/PlistBuddy -c "Set :CFBundleDisplayName $APP_NAME" "$STAGE/Contents/Info.plist"
-    /usr/libexec/PlistBuddy -c "Set :CFBundleExecutable $EXECUTABLE" "$STAGE/Contents/Info.plist"
-    FAN_PLIST="$STAGE/Contents/Library/LaunchDaemons/$FAN_HELPER_ID.plist"
-    /usr/libexec/PlistBuddy -c "Set :Label $FAN_HELPER_ID" "$FAN_PLIST"
-    /usr/libexec/PlistBuddy -c "Set :BundleProgram Contents/Library/LaunchServices/$FAN_HELPER_ID" "$FAN_PLIST"
-    /usr/libexec/PlistBuddy -c "Delete :MachServices:com.vorssaint.utils.fan-control" "$FAN_PLIST"
-    /usr/libexec/PlistBuddy -c "Add :MachServices:$FAN_HELPER_ID bool true" "$FAN_PLIST"
     # Stamp the source commit + build time so the running dev app shows (in About)
     # exactly which code it was compiled from. Lets you verify it matches HEAD before
     # testing, instead of unknowingly running a stale build. Dev-only; never shipped.
@@ -828,31 +827,6 @@ sign_installed_bundle() {
 
 sign_bundle "$STAGE"
 
-process_is_running() {
-    local proc="$1"
-    if (( ${#proc} > 15 )); then
-        pgrep -f "/Contents/MacOS/$proc" >/dev/null 2>&1
-    else
-        pgrep -x "$proc" >/dev/null 2>&1
-    fi
-}
-
-stop_process() {
-    local proc="$1"
-    if (( ${#proc} > 15 )); then
-        pkill -f "/Contents/MacOS/$proc" 2>/dev/null || true
-    else
-        pkill -x "$proc" 2>/dev/null || true
-    fi
-    for _ in {1..50}; do
-        if ! process_is_running "$proc"; then
-            return 0
-        fi
-        sleep 0.1
-    done
-    echo "✗ $proc is still running — quit it and retry" >&2
-    return 1
-}
 
 wait_for_install_metadata() {
     local bundle="$1"
@@ -904,20 +878,17 @@ fi
 
 if (( INSTALL )); then
     echo "▸ Installing into /Applications…"
-    stop_process "$EXECUTABLE"
-    # Only an official install replaces the pre-rename official apps. The
-    # Developer variant must coexist with them just as it does with Vorssaint.
-    if (( ! DEV )); then
-        for legacy in "Vorss:Vorss" "Vorssaint Utils:VorssaintUtils"; do
-            name="${legacy%%:*}"; proc="${legacy##*:}"
-            if [[ -d "/Applications/$name.app" ]]; then
-                stop_process "$proc"
-                rm -rf "/Applications/$name.app"
-                echo "  (legacy $name.app removed)"
-            fi
-        done
-    fi
+    ./Tools/stop-app.sh "$APP_BUNDLE_ID"
+    # Replace the app bundle at the normal path, keeping preference/data domains separate.
     INSTALL_DEST="/Applications/$APP_NAME.app"
+    mkdir -p "${INSTALL_DEST:h}"
+    if [[ -d "$INSTALL_DEST" ]]; then
+        installed_id="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$INSTALL_DEST/Contents/Info.plist")" || exit 1
+        [[ "$installed_id" == "$APP_BUNDLE_ID" || "$installed_id" == "com.vorssaint.utils.dev" || "$installed_id" == "com.vorssaint.utils" ]] || { echo "✗ Install destination belongs to another app" >&2; exit 1; }
+        if [[ "$installed_id" != "$APP_BUNDLE_ID" ]]; then
+            ./Tools/stop-app.sh "$installed_id"
+        fi
+    fi
     rm -rf "$INSTALL_DEST"
     ditto --noextattr --noqtn "$STAGE" "$INSTALL_DEST"
     sign_installed_bundle "$INSTALL_DEST"

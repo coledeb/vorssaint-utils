@@ -1983,8 +1983,30 @@ enum Defaults {
         DefaultsKey.windowLayoutShortcutFullScreen: WindowLayoutAction.clearedShortcutStorageValue,
     ]
 
+    /// Carry portable settings into the fork once, leaving the old build intact.
+    /// System recovery journals and permissions must stay with their original app.
+    static func migrateForkPreferences(in defaults: UserDefaults,
+                                       bundleIdentifier: String?) {
+        guard bundleIdentifier == "com.coledeb.vorssaint.utils" else { return }
+        let marker = "coledebPreferencesMigrated"
+        guard !defaults.bool(forKey: marker) else { return }
+        let legacy = defaults.persistentDomain(forName: "com.vorssaint.utils.dev") ?? [:]
+        let existing = defaults.persistentDomain(forName: "com.coledeb.vorssaint.utils") ?? [:]
+        for (key, value) in forkPreferencesToMigrate(legacy: legacy, existing: existing) {
+            defaults.set(value, forKey: key)
+        }
+        defaults.set(true, forKey: marker)
+    }
+
+    static func forkPreferencesToMigrate(legacy: [String: Any],
+                                         existing: [String: Any]) -> [String: Any] {
+        legacy.filter { SettingsBackupSupport.exportKeys().contains($0.key)
+            && existing[$0.key] == nil }
+    }
+
     static func register() {
         let defaults = UserDefaults.standard
+        migrateForkPreferences(in: defaults, bundleIdentifier: Bundle.main.bundleIdentifier)
         migrateClipboardSensitiveTextOptIn(in: defaults)
         migrateNotchAgentsOptIn(in: defaults)
         migrateExistingNotchDefaults(in: defaults)

@@ -14,7 +14,7 @@ sign the app bundle.
 git clone https://github.com/vorssaint/vorssaint-utils.git
 cd vorssaint-utils
 ./build.sh --dev
-./build/VorssaintDeveloper --selftest
+./build/Vorssaint --selftest
 ./build.sh --test
 ```
 
@@ -116,3 +116,19 @@ publishes an immutable release. Confirm publication succeeded; a pushed tag alon
 is not a published version. Beta releases remain prereleases and do not replace
 the latest stable release or its Homebrew cask. Do not move published tags or
 replace published artifacts.
+
+This fork keeps the app and executable named `Vorssaint`, with bundle ID
+`com.coledeb.vorssaint.utils` in both debug and release builds. Its fan helper
+uses `com.coledeb.vorssaint.utils.fan-control`. Upstream self-updates are disabled.
+`--install` targets `/Applications/Vorssaint.app` and can replace this fork,
+its former `com.vorssaint.utils.dev` build, or the official `com.vorssaint.utils`
+app. Only the app bundle is replaced: upstream preferences, stored data, and
+permissions are not deleted or imported. Process shutdown uses bundle IDs;
+when replacing upstream, its running processes are stopped before replacement.
+Other apps sharing the executable name are not stopped.
+
+On first launch, portable settings are copied once from the old development
+preference domain without removing it or overwriting existing fork settings.
+macOS permissions belong to the new identity and need to be granted again.
+Stored history, security-scoped folder grants, and system recovery state stay
+with the old build.

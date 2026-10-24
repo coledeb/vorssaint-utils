@@ -124,7 +124,7 @@ jobs:
 
       - name: Verify release signature
         run: |
-          REQUIREMENT='identifier "com.vorssaint.utils" and anchor apple generic and certificate leaf[subject.OU] = "3D485NHW29"'
+          REQUIREMENT='identifier "com.coledeb.vorssaint.utils" and anchor apple generic and certificate leaf[subject.OU] = "3D485NHW29"'
           codesign --verify --deep --strict -R="$REQUIREMENT" build/stage/Vorssaint.app
 
       - name: Selftest
@@ -190,7 +190,7 @@ jobs:
           hdiutil attach -nobrowse -readonly -mountpoint "$MP" "$DMG"
           spctl -a -t exec -vv "$MP/Vorssaint.app" 2>&1 | tee /tmp/spctl.txt
           grep -q "source=Notarized Developer ID" /tmp/spctl.txt
-          REQUIREMENT='identifier "com.vorssaint.utils" and anchor apple generic and certificate leaf[subject.OU] = "3D485NHW29"'
+          REQUIREMENT='identifier "com.coledeb.vorssaint.utils" and anchor apple generic and certificate leaf[subject.OU] = "3D485NHW29"'
           codesign --verify --deep --strict -R="$REQUIREMENT" "$MP/Vorssaint.app"
           xcrun stapler validate "$MP/Vorssaint.app"
 

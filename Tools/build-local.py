@@ -29,10 +29,6 @@ def main():
         script = script.replace(old, new, 1)
 
     replace_once('cd "$(dirname "$0")"', "cd " + shlex.quote(str(root)))
-    # Use the normal name for generated bundles, retaining the dev identity.
-    # Explicit installs keep the upstream name to coexist in /Applications.
-    if "--install" not in sys.argv[1:]:
-        replace_once('APP_NAME="Vorssaint (Developer)"', 'APP_NAME="Vorssaint"')
     for name, code in [("developer_id_identity", "return 0"), ("legacy_identity_installed", "return 1")]:
         script, count = re.subn(rf"{name}\(\) \{{.*?\n\}}", f"{name}() {{ {code};\n}}",
                                 script, count=1, flags=re.S)

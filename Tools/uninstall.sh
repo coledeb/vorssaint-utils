@@ -2,16 +2,15 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Copyright (C) 2026 Vorssaint
 
-# Cleanly removes Vorssaint and every piece of system state it created:
+# Cleanly removes this fork and every piece of system state it created:
 # the fan helper daemon, the login item, TCC permissions, preferences, saved
 # state, the app's own data folder and (if present) the password-free
 # closed-lid sudoers rule. Leaves no dead entries behind.
-# Also clears the pre-rename "Vorssaint Utils.app" if it is still around.
+# Other bundle identities and their app bundles are left in place.
 set -uo pipefail
 
-BUNDLE="com.vorssaint.utils"
+BUNDLE="com.coledeb.vorssaint.utils"
 APP="/Applications/Vorssaint.app"
-LEGACY_APP="/Applications/Vorssaint Utils.app"
 
 # A readable domain with a missing key is different from a failed read. Export
 # the whole domain first, including an empty dictionary when it does not exist.
@@ -113,8 +112,12 @@ spaces_removal_state() {
 }
 
 echo "▸ Quitting…"
-pkill -x Vorssaint 2>/dev/null || true
-pkill -x VorssaintUtils 2>/dev/null || true
+# Refuse to remove a different app even if it occupies the expected path.
+if [[ -d "$APP" ]]; then
+    installed_id="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$APP/Contents/Info.plist")" || exit 1
+    [[ "$installed_id" == "$BUNDLE" ]] || { print -u2 "App identity does not match this fork"; exit 1; }
+fi
+"${0:A:h}/stop-app.sh" "$BUNDLE" || exit 1
 sleep 0.5
 
 # Detach from the system from inside whichever bundle still exists: unregisters
@@ -125,7 +128,7 @@ sleep 0.5
 # check after the loop settles what its absence or failure left behind.
 detached=1
 ran_app=0
-for candidate in "$APP/Contents/MacOS/Vorssaint" "$LEGACY_APP/Contents/MacOS/VorssaintUtils"; do
+for candidate in "$APP/Contents/MacOS/Vorssaint"; do
     if [[ -x "$candidate" ]]; then
         echo "▸ Detaching the fan helper and login item, restoring sleep and Space rearranging…"
         ran_app=1
@@ -182,7 +185,7 @@ echo "▸ Resetting permissions (Accessibility, Screen Recording)…"
 tccutil reset All "$BUNDLE" >/dev/null 2>&1 || true
 
 echo "▸ Removing app, preferences, saved state and stored data (clipboard history, shelf files, share links)…"
-rm -rf "$APP" "$LEGACY_APP"
+rm -rf "$APP"
 defaults delete "$BUNDLE" >/dev/null 2>&1 || true
 rm -f "$HOME/Library/Preferences/$BUNDLE.plist"
 rm -rf "$HOME/Library/Saved Application State/$BUNDLE.savedState"

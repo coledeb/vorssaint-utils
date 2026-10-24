@@ -429,7 +429,8 @@ enum AppManagementFeatureTests {
         suite.expect(CleanerSupport.isProtectedBundleID("com.apple.Music")
                && CleanerSupport.isProtectedBundleID("com.apple")
                && CleanerSupport.isProtectedBundleID("group.com.apple.notes")
-               && CleanerSupport.isProtectedBundleID("com.vorssaint.utils"),
+               && CleanerSupport.isProtectedBundleID("com.vorssaint.utils")
+               && CleanerSupport.isProtectedBundleID("com.coledeb.vorssaint.utils"),
                "system domains and this app can never be junk owners")
         suite.expect(!CleanerSupport.isProtectedBundleID("com.vendor.editor"),
                "third party identifiers are eligible for the leftover check")
@@ -591,7 +592,7 @@ enum AppManagementFeatureTests {
             if case let .failure(reason) = UninstallerSupport.evaluate(url) { return reason }
             return nil
         }
-        let ownApp = selectionBundle("Copy.app", bundleID: "com.vorssaint.utils.dev")
+        let ownApp = selectionBundle("Copy.app", bundleID: "com.coledeb.vorssaint.utils")
         let plainFolder = selectionFixture.appendingPathComponent("Folder", isDirectory: true)
         try? FileManager.default.createDirectory(at: plainFolder, withIntermediateDirectories: true)
         let document = selectionFixture.appendingPathComponent("Notes.txt")
