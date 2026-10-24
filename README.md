@@ -13,19 +13,19 @@
 </p>
 
 <p align="center">
-  <a href="https://vorssaint.com">Website</a> ·
+  <a href="https://vorssaint.com">Upstream website</a> ·
   <a href="#install">Install</a> ·
   <a href="#everything-it-does">Features</a> ·
   <a href="#private-by-default">Privacy</a> ·
   <a href="CHANGELOG.md">Changelog</a> ·
-  <a href="mailto:hello@vorssaint.com">Contact</a> ·
+  <a href="https://github.com/vorssaint/vorssaint-utils/issues">Upstream issues</a> ·
   <a href="https://discord.gg/M6BwWH4BJp">Discord</a>
 </p>
 
 <p align="center">
-  <a href="https://github.com/vorssaint/vorssaint-utils/releases"><img src="https://img.shields.io/github/v/release/vorssaint/vorssaint-utils?label=release&color=4c8dff" alt="Latest release"></a>
-  <a href="https://github.com/vorssaint/vorssaint-utils/releases"><img src="https://img.shields.io/github/downloads/vorssaint/vorssaint-utils/total?color=4c8dff" alt="Downloads"></a>
-  <a href="https://github.com/vorssaint/vorssaint-utils/actions/workflows/ci.yml"><img src="https://github.com/vorssaint/vorssaint-utils/actions/workflows/ci.yml/badge.svg?branch=main&event=push" alt="CI status"></a>
+  <a href="https://github.com/vorssaint/vorssaint-utils/releases"><img src="https://img.shields.io/github/v/release/vorssaint/vorssaint-utils?label=upstream%20release&color=4c8dff" alt="Latest upstream release"></a>
+  <a href="https://github.com/vorssaint/vorssaint-utils/releases"><img src="https://img.shields.io/github/downloads/vorssaint/vorssaint-utils/total?label=upstream%20downloads&color=4c8dff" alt="Upstream downloads"></a>
+  <a href="https://github.com/coledeb/vorssaint-utils/actions/workflows/ci.yml"><img src="https://github.com/coledeb/vorssaint-utils/actions/workflows/ci.yml/badge.svg?branch=main&event=push" alt="CI status"></a>
   <a href="#what-you-need"><img src="https://img.shields.io/badge/macOS-14%2B%20Apple%20Silicon-black" alt="macOS 14 and newer, Apple Silicon"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0--or--later-blue" alt="License GPL 3.0 or later"></a>
 </p>
@@ -37,7 +37,7 @@
 </p>
 
 <p align="center">
-  For anything private, email
+  To contact the upstream maintainer privately, email
   <a href="mailto:hello@vorssaint.com"><strong>hello@vorssaint.com</strong></a>.
 </p>
 
@@ -65,7 +65,7 @@ Per app volume, a real system monitor, a better app switcher, window snapping, D
 > - **Default or Cozy volume controls.** Choose the original labeled layout or a compact row for each output, system-sounds and microphone control, with aligned sliders, editable percentages and boxed device selectors. Device menus keep full names and use device icons where available.
 > - **Separate system-sounds volume.** Adjust macOS alert and sound-effect volume independently of output and microphone volume. The level loads before the mixer opens and follows external changes while the mixer is visible.
 > - **Keep pinned apps visible (optional).** Pinned apps can stay in both the panel and Dynamic Island mixers when inactive, including running apps that aren't currently producing audio. Quitting removes their rows; reopening restores them. Explicitly hidden apps stay hidden, and saved volume and output choices are preserved.
-> - **Direct mixer pin button.** Pin or unpin an app directly from its row; the right-click menu remains available.
+> - **Direct mixer pin button.** Pin or unpin an app directly from its row; the right-click menu remains available, including upstream’s optional volume-control override for supported Discord and Teams apps. These apps bypass mixer processing by default to protect screen-shared audio.
 > - **Default or Cozy muted-microphone icon spacing.** Choose the original spacing or a tighter gap beside the menu bar icon. The microphone badge stays in place as the speaker's volume or mute state changes.
 >
 > **Other improvements**
@@ -73,8 +73,9 @@ Per app volume, a real system monitor, a better app switcher, window snapping, D
 > - **Settings and Quit beside the logo.** The menu bar panel keeps these actions in its header for quicker access and less space at the bottom.
 > - **Panel fits its content.** Balanced spacing and content-based sizing reduce empty space while keeping long sections scrollable.
 > - **Single-tab selector visibility.** Choose whether to hide the tab selector when only one section is visible.
-> - **Local builds without a signing certificate.** [Tools/build-local.py](Tools/build-local.py) wraps the upstream build with ad-hoc signing and a local compiler cache. Generated local bundles use the Vorssaint name; explicit installs retain the developer name so they can coexist with the installed app.
-> - **Upstream update proposals.** A daily [sync workflow](.github/UPSTREAM_SYNC.md) updates the fork's upstream branch and opens or refreshes a pull request for review. Updates are merged manually.
+> - **Local builds without a signing certificate.** [Tools/build-local.py](Tools/build-local.py) wraps the upstream build with ad-hoc signing and a local compiler cache. The app and executable are named Vorssaint, including when installed at `/Applications/Vorssaint.app`.
+> - **Separate fork identity.** Bundle ID `com.coledeb.vorssaint.utils` keeps this fork’s settings, stored data, permissions and fan helper separate from upstream. Installing can replace the official app at the same path without deleting or importing its settings or data. macOS permissions need to be granted for the fork.
+> - **Upstream update proposals.** A daily [sync workflow](.github/UPSTREAM_SYNC.md) updates the fork's upstream branch and opens or refreshes a pull request for review. Updates are merged manually. This fork does not self-update from upstream releases; pull the fork’s latest source and rebuild to update it.
 >
 > For full details of each change, see the [commits list](https://github.com/coledeb/vorssaint-utils/commits/main).
 
@@ -192,29 +193,48 @@ Reorder or hide panel sections, choose a compact layout, and export settings to 
 
 ## Install
 
-With [Homebrew](https://brew.sh):
+This fork is currently distributed as source; it has no published app releases.
+Follow [Build it yourself](#build-it-yourself) below to build the customized app.
+
+The app and executable are both named **Vorssaint**. Installation uses
+`/Applications/Vorssaint.app`, so it can replace the official app in the same
+location. Its bundle ID, `com.coledeb.vorssaint.utils`, keeps its preferences,
+stored data, permissions and fan helper separate from upstream’s
+`com.vorssaint.utils` identity. Replacing the app does not remove or import
+upstream’s settings or data. Grant the fork its own macOS permissions when asked.
+
+Portable settings from the previous local `com.vorssaint.utils.dev` build are
+copied once, without overwriting existing fork settings. Stored history, folder
+grants and system recovery state remain with the old build.
+
+### Official upstream app
+
+The Homebrew cask and [upstream releases](https://github.com/vorssaint/vorssaint-utils/releases)
+install the official app, without this fork’s customizations:
 
 ```sh
 brew install --cask vorssaint
 ```
 
-Or grab the disk image from the [releases page](https://github.com/vorssaint/vorssaint-utils/releases) and drag Vorssaint into Applications.
-
-Builds are signed with an Apple Developer ID and notarized, so macOS opens them without a fuss and your permissions survive updates.
+Official upstream releases are Developer ID signed and notarized. Local builds
+made with this fork’s helper use ad-hoc signing; they are not notarized, and
+permissions may need to be granted again after a rebuild.
 
 ## Uninstall
 
-With Homebrew:
-
-```sh
-brew uninstall --cask vorssaint
-```
-
-To remove Vorssaint completely, including its settings and permissions:
+Use **Settings → Advanced** in the fork to uninstall it completely, or run this
+from the fork’s source checkout:
 
 ```sh
 ./Tools/uninstall.sh
 ```
+
+The script removes the fork’s app, settings, stored data and permissions. It
+checks the installed app’s bundle ID and refuses to remove the official app.
+Upstream’s separate settings and stored data are left in place.
+
+For an official Homebrew installation, use `brew uninstall --cask vorssaint`.
+The cask targets the same app path, so avoid using it to manage the fork.
 
 ## Private by default
 
@@ -236,17 +256,42 @@ See the [permissions guide](docs/PERMISSIONS.md) for which features need access 
 ### Build it yourself
 
 ```sh
-git clone https://github.com/vorssaint/vorssaint-utils.git
+git clone https://github.com/coledeb/vorssaint-utils.git
 cd vorssaint-utils
-./build.sh --dev            # build the separate Developer variant
-./build.sh --dev --install  # install and launch it
+python3 Tools/build-local.py --dev
+open build/stage.noindex/Vorssaint.app
 ```
 
-Xcode Command Line Tools are the only requirement. The [contributing guide](CONTRIBUTING.md) covers the layout and conventions. Official builds come only from the maintainer: the GPL covers the source, while the Vorssaint name, icon and look are covered by [TRADEMARKS.md](TRADEMARKS.md), so forks need their own identity.
+To install at `/Applications/Vorssaint.app` instead:
+
+```sh
+python3 Tools/build-local.py --dev --install
+open /Applications/Vorssaint.app
+```
+
+The install command replaces an existing official app, this fork, or its old
+local development build at that path. It stops the matching app by bundle ID
+before replacement and leaves upstream’s settings and data intact.
+
+To update this fork, pull its latest source and repeat the build:
+
+```sh
+git pull --ff-only
+python3 Tools/build-local.py --dev
+```
+
+Quit the running copy before opening the rebuilt app. If you use the installed
+copy, repeat the install command instead.
+
+Xcode Command Line Tools and Python 3 are required. The
+[contributing guide](CONTRIBUTING.md) covers the layout and conventions.
+Official upstream builds come from the upstream maintainer; this is a personal
+fork. See [LICENSE](LICENSE) and [TRADEMARKS.md](TRADEMARKS.md) for the upstream
+licensing and branding notices.
 
 ## When something misbehaves
 
-See [troubleshooting](docs/TROUBLESHOOTING.md) for launch problems, permissions and missing previews, or [support](SUPPORT.md) for help.
+See [troubleshooting](docs/TROUBLESHOOTING.md) for launch problems, permissions and missing previews. The [upstream support guide](SUPPORT.md) covers the original project; this fork currently has no separate issue tracker.
 
 ## Documentation
 
@@ -259,9 +304,9 @@ See [troubleshooting](docs/TROUBLESHOOTING.md) for launch problems, permissions 
 
 ## Community
 
-Vorssaint went from first commit to the front of GitHub trending in three days, top of the Swift charts, and issues and pull requests have shaped every release since. Bug reports, feature ideas and translations are all welcome, starting from the [contributing guide](CONTRIBUTING.md).
+The upstream Vorssaint project went from first commit to the front of GitHub trending in three days, top of the Swift charts, and issues and pull requests have shaped every release since. Bug reports, feature ideas and translations are all welcome, starting from the [contributing guide](CONTRIBUTING.md).
 
-Vorssaint is free and will stay that way. If it earned its place in your menu bar, a star helps other people find it, and a [coffee](https://buymeacoffee.com/vorssaint) keeps the maintainer awake, with or without the Keep awake feature.
+Vorssaint is free and will stay that way. If it earned its place in your menu bar, a star helps other people find it, and a [coffee](https://buymeacoffee.com/vorssaint) supports the upstream maintainer, with or without the Keep awake feature.
 
 ## Acknowledgements
 
