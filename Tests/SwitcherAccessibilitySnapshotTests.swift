@@ -174,12 +174,13 @@ enum SwitcherAccessibilitySnapshotTests {
         // path, including the metadata that used to be fetched a second time.
         Reader.batchRequests = []
         Reader.batchOptions = []
-        let manyWindows = (1...48).map { index -> Window in
-            Window(CGWindowID(index), attributes: [
+        let manyWindows: [Window] = (1...48).map { index in
+            let attributes: [String: Any] = [
                 kAXTitleAttribute as String: "Window \(index)",
                 "AXFullScreen": index % 3 == 1,
                 kAXMinimizedAttribute as String: index % 3 == 2
-            ])
+            ]
+            return Window(CGWindowID(index), attributes: attributes)
         }
         Reader.focused = manyWindows[0]
         let many = snapshot(manyWindows)
