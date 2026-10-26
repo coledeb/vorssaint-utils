@@ -1,7 +1,7 @@
 # Upstream updates
 
-**Sync upstream** runs every day at 14:23 UTC (9:23 AM Central during daylight
-saving time, 8:23 AM during standard time). You can also run it from the
+**Sync upstream** runs twice daily at 6 AM and 6 PM Central time
+(`America/Chicago`), automatically adjusting for daylight saving time. You can also run it from the
 repository's **Actions → Sync upstream → Run workflow** page on `main`.
 
 It fast-forwards this fork's `upstream` branch to `vorssaint/vorssaint-utils:main`
