@@ -46,6 +46,7 @@ def main():
     with tempfile.TemporaryDirectory(prefix="vorssaint-local-build-") as directory:
         driver = Path(directory) / "build.zsh"
         driver.write_text(script)
+        driver.chmod(0o700)
         return subprocess.call(["/bin/zsh", str(driver), *sys.argv[1:]], cwd=root)
 
 
