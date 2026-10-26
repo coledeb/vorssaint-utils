@@ -97,23 +97,24 @@ enum AXWindowResolverTests {
             let attribute = attribute as String
             calls.append(Call(element: element, operation: attribute,
                               started: ProcessInfo.processInfo.systemUptime, timeout: element.timeout))
-            switch attribute {
-            case kAXWindowsAttribute as String:
+            if attribute == (kAXWindowsAttribute as String) {
                 value = published as NSArray
                 return publishedResult
-            case kAXMainWindowAttribute as String:
+            }
+            if attribute == (kAXMainWindowAttribute as String) {
                 value = main
                 return main == nil ? .noValue : .success
-            case kAXFocusedWindowAttribute as String:
+            }
+            if attribute == (kAXFocusedWindowAttribute as String) {
                 value = focused
                 return focused == nil ? .noValue : .success
-            case kAXRoleAttribute as String:
+            }
+            if attribute == (kAXRoleAttribute as String) {
                 ProcessInfo.processInfo.systemUptime += element.roleDuration
                 value = element.role as NSString
                 return element.roleResult
-            default:
-                return .attributeUnsupported
             }
+            return .attributeUnsupported
         }
 
         static func CFGetTypeID(_ value: CFTypeRef) -> CFTypeID { value is Element ? 42 : 0 }
@@ -130,16 +131,48 @@ enum AXWindowResolverTests {
         Resolver.published = [sibling, target]
         suite.expect(Resolver.element(for: 77, in: app, pid: 10) === target && Resolver.tokens.isEmpty,
                      "a published exact window resolves without a remote probe or sibling substitution")
+        suite.expect(target.timeout == Float(0.35),
+                     "a published window receives its own ordinary action timeout")
+
+        Resolver.reset()
+        let publishedChild = Element(windowID: 77)
+        publishedChild.role = kAXGroupRole as String
+        Resolver.published = [publishedChild, target]
+        suite.expect(Resolver.element(for: 77, in: app, pid: 10) === target && Resolver.tokens.isEmpty,
+                     "a published child with the correct containing-window id cannot replace its window root")
+
+        Resolver.reset()
+        Resolver.main = publishedChild
+        Resolver.focused = target
+        suite.expect(Resolver.element(for: 77, in: app) === target && Resolver.tokens.isEmpty,
+                     "a main reference with the wrong role does not hide the exact focused window root")
+
+        Resolver.reset()
+        let unansweredRole = Element(windowID: 77)
+        unansweredRole.roleResult = .cannotComplete
+        Resolver.published = [unansweredRole]
+        Resolver.focused = target
+        suite.expect(Resolver.element(for: 77, in: app) === target,
+                     "an unanswered published role does not prevent the focused-window fallback")
 
         Resolver.reset()
         Resolver.main = target
         suite.expect(Resolver.element(for: 77, in: app) === target && Resolver.tokens.isEmpty,
                      "the main-window reference resolves even without remote probing enabled")
+        suite.expect(Resolver.calls.map(\.operation) == [kAXWindowsAttribute as String,
+                                                        kAXMainWindowAttribute as String,
+                                                        "window", kAXRoleAttribute as String],
+                     "main-window resolution reads its own reference and role without consulting focused-window")
         Resolver.reset()
         Resolver.main = sibling
         Resolver.focused = target
         suite.expect(Resolver.element(for: 77, in: app) === target && Resolver.tokens.isEmpty,
                      "a sibling main window cannot replace the exact focused target")
+        suite.expect(Resolver.calls.map(\.operation) == [kAXWindowsAttribute as String,
+                                                        kAXMainWindowAttribute as String, "window",
+                                                        kAXFocusedWindowAttribute as String,
+                                                        "window", kAXRoleAttribute as String],
+                     "focused-window resolution follows the main reference and reads the target's distinct role")
 
         Resolver.reset()
         Resolver.publishedResult = .cannotComplete

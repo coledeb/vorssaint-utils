@@ -773,15 +773,13 @@ enum FeatureCatalogTests {
                 .joined()
                 .filter { !$0.isWhitespace }
         }
-        // Issue #2270: nested in the page's plain stack, the lazy stack resized
-        // it as group cards came into view and could keep redoing its layout
-        // until Settings froze. A source check on the page's `content` with
-        // comment lines dropped: it keeps that structure from coming back, not
-        // the scrolling itself, which only a scroll run shows.
+        // The lazy stack remained after #2270 and still appears in the hang
+        // reports for #2311/#2642. Guard the eager layout here; the layout
+        // suite checks scroll geometry and the offscreen notice changes.
         let compactHubContent = compactMember("private var content: some View {", in: featureHubSource)
-        suite.expect(compactHubContent.components(separatedBy: "LazyVStack(").count == 2
-                && compactHubContent.contains("ScrollView{LazyVStack("),
-               "the hub's one lazy stack is its scroll view's own content, never nested in another stack")
+        suite.expect(compactHubContent.contains("ScrollView{VStack(")
+                && !compactHubContent.contains("LazyVStack("),
+               "the Features page measures its cards eagerly instead of estimating their height during scrolling")
         // A lazy stack on the Monitor page re-measures and re-anchors its rows
         // without settling once the Bars options make the menu bar card taller,
         // which hangs Settings on the first scroll. The same kind of source

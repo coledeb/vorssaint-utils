@@ -174,7 +174,7 @@ enum SwitcherAccessibilitySnapshotTests {
         // path, including the metadata that used to be fetched a second time.
         Reader.batchRequests = []
         Reader.batchOptions = []
-        let manyWindows: [Window] = (1...48).map { index in
+        let manyWindows = (1...48).map { (index: Int) -> Window in
             let attributes: [String: Any] = [
                 kAXTitleAttribute as String: "Window \(index)",
                 "AXFullScreen": index % 3 == 1,
