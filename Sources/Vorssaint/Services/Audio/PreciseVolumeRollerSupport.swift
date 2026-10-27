@@ -73,7 +73,14 @@ enum PreciseVolumeKeyEvents {
     }
 
     static func fineStep(_ keyCode: Int32) -> [CGEvent] {
-        let fineFlags: UInt = 0x80000 | 0x20000
+        events(keyCode, modifiers: 0x80000 | 0x20000)
+    }
+
+    static func muteToggle() -> [CGEvent] {
+        events(PreciseVolumeMediaKey.mute.rawValue, modifiers: 0)
+    }
+
+    private static func events(_ keyCode: Int32, modifiers fineFlags: UInt) -> [CGEvent] {
         return [0x0a, 0x0b].compactMap { state in
             let event = NSEvent.otherEvent(with: .systemDefined,
                                            location: .zero,

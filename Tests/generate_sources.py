@@ -47,6 +47,19 @@ def availability_declaration(path, prefix):
 
 def main():
     OUTPUT.mkdir(parents=True, exist_ok=True)
+    write("MixerMuteButtonBodies.swift", "import Foundation\n"
+          + "extension MixerMuteButtonTests {\n"
+          + "final class Alerts: AlertFixture {\n"
+          + declaration("Sources/Vorssaint/Services/Audio/SystemAlertVolume.swift", "    func toggleMute()")
+          + declaration("Sources/Vorssaint/Services/Audio/SystemAlertVolume.swift", "    var displayVolume:") + "}\n"
+          + "final class Input: InputFixture {\n"
+          + declaration("Sources/Vorssaint/Services/Audio/AudioInputDeviceManager.swift", "    func toggleVolumeMute()") + "}\n"
+          + "final class Output {\n"
+          + declaration("Sources/Vorssaint/Services/Audio/PreciseVolumeRollerService.swift", "    func toggleOutputMute()") + "}\n"
+          + "final class Controls: ControlsFixture {\n"
+          + declaration("Sources/Vorssaint/UI/MenuPanel/MixerSection.swift", "    private func toggleMicrophoneMute()")
+              .replace("private func", "func", 1).replace("AppFeature.micMute.isAvailable", "featureAvailable")
+          + "}\n}\n")
     recent_captures = "Sources/Vorssaint/Services/QuickTools/RecentCaptureService.swift"
     write("RecentCapturePanel.swift", "import Foundation\nimport Carbon.HIToolbox\n"
           + "extension RecentCapturePanelTests {\nfinal class Service: Fixture {\n"

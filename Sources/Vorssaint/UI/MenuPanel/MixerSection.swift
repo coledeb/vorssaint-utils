@@ -132,16 +132,60 @@ struct MixerSection: View {
         }
     }
 
-    private func controlIcon(_ symbol: String) -> some View {
-        Image(systemName: symbol)
-            .font(.system(size: 10.5, weight: .semibold))
-            .foregroundStyle(.secondary)
-            .frame(width: 16)
-            .accessibilityHidden(true)
+    private var outputIsMuted: Bool {
+        mixer.systemOutputMuted == true || mixer.systemOutputVolume.map { $0 <= 0.001 } == true
+    }
+
+    private var microphoneIsMuted: Bool {
+        (AppFeature.micMute.isAvailable && micMute.isMuted)
+            || inputManager.inputVolume.map { $0 <= 0.001 } == true
+    }
+
+    private var outputMuteButton: some View {
+        muteButton(symbol: "speaker.wave.2.fill", mutedSymbol: "speaker.slash.fill",
+                   muted: outputIsMuted, enabled: mixer.currentOutputDeviceUID != nil,
+                   title: l10n.s.mixerSystemOutputTitle) {
+            PreciseVolumeRollerService.shared.toggleOutputMute()
+        }
+    }
+
+    private var alertsMuteButton: some View {
+        muteButton(symbol: "bell.fill", mutedSymbol: "bell.slash.fill",
+                   muted: alertVolume.volume.map { $0 <= 0.001 } == true,
+                   enabled: alertVolume.volume != nil && !alertVolume.unavailable,
+                   title: l10n.s.mixerSoundEffectsOutputTitle) { alertVolume.toggleMute() }
+    }
+
+    private var microphoneMuteButton: some View {
+        muteButton(symbol: "mic.fill", mutedSymbol: "mic.slash.fill",
+                   muted: microphoneIsMuted,
+                   enabled: AppFeature.micMute.isAvailable ? !inputManager.inputDevices.isEmpty : inputManager.inputVolume != nil,
+                   title: l10n.s.mixerInputTitle, action: toggleMicrophoneMute)
+    }
+
+    private func toggleMicrophoneMute() {
+        if AppFeature.micMute.isAvailable { micMute.toggle() }
+        else { inputManager.toggleVolumeMute() }
+    }
+
+    private func muteButton(symbol: String, mutedSymbol: String, muted: Bool,
+                            enabled: Bool, title: String, action: @escaping () -> Void) -> some View {
+        let label = "\(muted ? l10n.s.actionUnmute : l10n.s.actionMute): \(title)"
+        return Button(action: action) {
+            Image(systemName: muted ? mutedSymbol : symbol)
+                .font(.system(size: 10.5, weight: .semibold))
+                .foregroundStyle(muted ? Color.red : Color.secondary)
+                .frame(width: 16, height: 18)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .disabled(!enabled)
+        .help(label)
+        .accessibilityLabel(label)
     }
 
     private func volumeControl(_ volume: Double?, binding: Binding<Double>,
-                               title: String, editorID: String) -> some View {
+                               title: String, editorID: String, muted: Bool = false) -> some View {
         HStack(spacing: 8) {
             if volume != nil {
                 MixerVolumeSlider(value: binding,
@@ -168,22 +212,23 @@ struct MixerSection: View {
             } onCommit: { binding.wrappedValue = $0 }
         }
         .frame(maxWidth: .infinity)
-        .disabled(volume == nil)
+        .disabled(volume == nil || muted)
     }
 
     private var alertVolumeControl: some View {
-        volumeControl(alertVolume.volume,
-                      binding: Binding(get: { alertVolume.volume ?? 0 }, set: { alertVolume.setVolume($0) }),
-                      title: l10n.s.mixerSoundEffectsOutputTitle, editorID: "system-alerts")
+        volumeControl(alertVolume.displayVolume,
+                      binding: Binding(get: { alertVolume.displayVolume ?? 0 }, set: { alertVolume.setVolume($0) }),
+                      title: l10n.s.mixerSoundEffectsOutputTitle, editorID: "system-alerts",
+                      muted: alertVolume.volume.map { $0 <= 0.001 } == true)
             .help(alertVolume.unavailable ? l10n.s.mixerAlertVolumeUnavailable : l10n.s.mixerSoundEffectsOutputTitle)
     }
 
     private var cozyOutputRow: some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack(spacing: 8) {
-                controlIcon("speaker.wave.2.fill")
+                outputMuteButton
                 volumeControl(mixer.systemOutputVolume, binding: systemOutputVolumeBinding,
-                              title: l10n.s.mixerSystemOutputTitle, editorID: "system-output")
+                              title: l10n.s.mixerSystemOutputTitle, editorID: "system-output", muted: outputIsMuted)
                 compactDevicePicker(title: l10n.s.mixerSystemOutputTooltip,
                                     selection: universalOutputSelectionBinding,
                                     name: universalOutputDevices.first { $0.uid == mixer.currentOutputDeviceUID }?.name,
@@ -203,7 +248,7 @@ struct MixerSection: View {
     private var cozyAlertsRow: some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack(spacing: 8) {
-                controlIcon("bell.fill")
+                alertsMuteButton
                 alertVolumeControl
                 compactDevicePicker(title: l10n.s.mixerSoundEffectsOutputTooltip,
                                     selection: systemSoundOutputSelectionBinding,
@@ -231,7 +276,7 @@ struct MixerSection: View {
     private var cozyMicrophoneRow: some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack(spacing: 8) {
-                controlIcon("mic.fill")
+                microphoneMuteButton
                 volumeControl(inputManager.inputVolume, binding: inputVolumeBinding,
                               title: l10n.s.mixerInputTitle, editorID: "microphone-input")
                     .disabled(micMute.isMuted)
@@ -287,7 +332,7 @@ struct MixerSection: View {
         VStack(alignment: .leading, spacing: 4) {
             HStack(spacing: 8) {
                 HStack(spacing: 8) {
-                    controlIcon("speaker.wave.2.fill")
+                    outputMuteButton
                     Text(l10n.s.mixerSystemOutputTitle)
                         .font(.system(size: 11.5, weight: .medium))
                         .foregroundStyle(.secondary)
@@ -330,6 +375,7 @@ struct MixerSection: View {
                     }
                 }
                 .padding(.leading, 24)
+                .disabled(outputIsMuted)
             }
 
             if universalOutputDevices.isEmpty {
@@ -342,7 +388,7 @@ struct MixerSection: View {
         VStack(alignment: .leading, spacing: 4) {
             HStack(spacing: 8) {
                 HStack(spacing: 8) {
-                    controlIcon("bell.fill")
+                    alertsMuteButton
                     Text(l10n.s.mixerSoundEffectsOutputTitle)
                         .font(.system(size: 11.5, weight: .medium))
                         .foregroundStyle(.secondary)
@@ -419,7 +465,7 @@ struct MixerSection: View {
         VStack(alignment: .leading, spacing: 4) {
             HStack(spacing: 8) {
                 HStack(spacing: 8) {
-                    controlIcon("mic.fill")
+                    microphoneMuteButton
                     Text(l10n.s.mixerInputTitle)
                         .font(.system(size: 11.5, weight: .medium))
                         .foregroundStyle(.secondary)
@@ -1505,7 +1551,8 @@ private struct MixerVolumeSlider: View {
     let maximum: Double
     let accessibilityLabel: String
 
-    private var activeTint: Color { isBoosting ? boostTint : normalTint }
+    @Environment(\.isEnabled) private var isEnabled
+    private var activeTint: Color { isEnabled ? (isBoosting ? boostTint : normalTint) : .secondary }
     private var percentage: Int { MixerRoutingSupport.displayPercent(forVolume: value) }
 
     var body: some View {
@@ -1552,6 +1599,7 @@ private struct LiquidGlassMixerSlider: View {
     @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
     @Environment(\.colorScheme) private var colorScheme
 
+    @Environment(\.isEnabled) private var isEnabled
     private let knobWidth: CGFloat = 24
     private let knobHeight: CGFloat = 15
     private let trackHeight: CGFloat = 5
@@ -1593,6 +1641,7 @@ private struct LiquidGlassMixerSlider: View {
         .accessibilityLabel(accessibilityLabel)
         .accessibilityValue("\(MixerRoutingSupport.displayPercent(forVolume: value))%")
         .accessibilityAdjustableAction { direction in
+            guard isEnabled else { return }
             switch direction {
             case .increment:
                 value = min(maximum, value + 0.05)
@@ -1640,6 +1689,7 @@ private struct LiquidGlassMixerSlider: View {
     }
 
     private func updateValue(at x: CGFloat, width: CGFloat) {
+        guard isEnabled else { return }
         let travel = max(width - knobWidth, 1)
         let normalized = min(max((x - knobWidth / 2) / travel, 0), 1)
         value = Double(normalized) * maximum

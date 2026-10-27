@@ -180,6 +180,14 @@ final class AudioInputDeviceManager: ObservableObject {
         }
     }
 
+    private var muteState = MixerVolumeMuteState()
+
+    func toggleVolumeMute() {
+        guard listenerInstalled,
+              let target = muteState.target(volume: inputVolume, deviceUID: effectiveInputDeviceUID) else { return }
+        setInputVolume(target)
+    }
+
     func setInputVolume(_ volume: Double) {
         guard listenerInstalled, volume.isFinite,
               let muteLifetime = MicMuteService.shared.inputVolumeAdjustmentLifetime,

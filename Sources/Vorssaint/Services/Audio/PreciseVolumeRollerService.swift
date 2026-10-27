@@ -29,6 +29,16 @@ final class PreciseVolumeRollerService: ObservableObject {
         SessionActivity.shared.onChange { [weak self] _ in self?.syncWithPreferences() }
     }
 
+    func toggleOutputMute() {
+        AppVolumeMixer.shared.requestOutputMuteToggle { result in
+            if result == .fallback {
+                PreciseVolumeKeyEvents.muteToggle().forEach { $0.post(tap: .cgSessionEventTap) }
+            } else if result == .applied {
+                NotchService.shared.showCurrentVolume()
+            }
+        }
+    }
+
     func syncWithPreferences() {
         let wanted = AppFeature.mixer.isAvailable
             && (UserDefaults.standard.bool(forKey: DefaultsKey.preciseVolumeRollerEnabled)

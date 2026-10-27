@@ -13,12 +13,19 @@ final class SystemAlertVolume: ObservableObject {
 
     @Published private(set) var volume: Double?
     @Published private(set) var unavailable = false
+    @Published private(set) var mutedDisplayVolume: Double?
+
+    var displayVolume: Double? {
+        guard let volume else { return nil }
+        return volume <= 0.001 ? mutedDisplayVolume ?? volume : volume
+    }
     private var subscribers = 0
     private var timer: Timer?
     private var pendingWrite: DispatchWorkItem?
     private var desiredPercent: Int?
     private var busy = false
     private var revision = 0
+    private var muteState = MixerVolumeMuteState()
 
     /// Warm the value at feature startup, like the output/input observers, so
     /// the first visible panel doesn't have to wait for its initial read.
@@ -46,8 +53,17 @@ final class SystemAlertVolume: ObservableObject {
         // A user's final adjustment must still finish if the panel closes.
     }
 
+    func toggleMute() {
+        guard !unavailable,
+              let target = muteState.target(volume: volume, deviceUID: "system-alerts") else { return }
+        let previousVolume = volume
+        setVolume(target)
+        mutedDisplayVolume = target == 0 ? previousVolume : nil
+    }
+
     func setVolume(_ value: Double) {
         guard value.isFinite else { return }
+        mutedDisplayVolume = nil
         let percent = Int((min(1, max(0, value)) * 100).rounded())
         revision += 1
         volume = Double(percent) / 100
@@ -84,6 +100,7 @@ final class SystemAlertVolume: ObservableObject {
                 guard let self else { return }
                 self.busy = false
                 if self.revision == startedRevision {
+                    if let value, value > 0.001 { self.mutedDisplayVolume = nil }
                     self.volume = value
                     self.unavailable = value == nil
                 }

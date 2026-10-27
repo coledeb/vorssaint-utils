@@ -1121,3 +1121,18 @@ enum AudioListenerClients {
         lock.withLock { entries[UInt(bitPattern: client)] = nil }
     }
 }
+
+/// Slider-based mute for controls that have no separate mute bit. Each device
+/// keeps its own restore level; nil/unavailable readings never cause a write.
+struct MixerVolumeMuteState {
+    private var lastAudible: [String: Double] = [:]
+
+    mutating func target(volume: Double?, deviceUID: String?) -> Double? {
+        guard let volume, volume.isFinite, let deviceUID, !deviceUID.isEmpty else { return nil }
+        if volume > 0.001 {
+            lastAudible[deviceUID] = min(1, volume)
+            return 0
+        }
+        return lastAudible[deviceUID] ?? 0.5
+    }
+}

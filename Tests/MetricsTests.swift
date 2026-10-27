@@ -137,7 +137,7 @@ struct MetricsTests {
                 QuickTogglesAlertTests.run(suite)
                 PortManagerRefreshTests.run(suite)
             }),
-            ("audio-device-icons", { AudioDeviceIconTests.run(suite) }),
+            ("audio-device-icons", { AudioDeviceIconTests.run(suite); MixerMuteButtonTests.run(suite) }),
             ("settings", {
                 SettingsFeatureTests.run(suite)
                 SettingsWindowTests.run { suite.expect($0, $1) }
