@@ -17,6 +17,15 @@ enum MixerMuteButtonTests {
         var writes: [Double] = []
         func setVolume(_ value: Double) { mutedDisplayVolume = nil; writes.append(value); volume = value }
     }
+    struct MixerApp {
+        let id: String
+        var volume: Double
+    }
+    class AppMuteFixture {
+        var lastAudibleVolume: [String: Double] = [:]
+        var writes: [Double] = []
+        func setVolume(_ value: Double, for app: MixerApp) { writes.append(value) }
+    }
     class InputFixture {
         var listenerInstalled = true
         var inputVolume: Double? = 0.62
@@ -79,6 +88,7 @@ enum MixerMuteButtonTests {
         output.toggleOutputMute()
         suite.expect(PreciseVolumeKeyEvents.posts == 2 && NotchService.shared.shows == 1,
                      "superseded or unconfirmed output writes do not trigger another mute")
+        retainedAppMute(suite)
         let alerts = Alerts()
         alerts.toggleMute()
         suite.expect(alerts.volume == 0 && alerts.displayVolume == 0.37,
@@ -132,6 +142,29 @@ enum MixerMuteButtonTests {
                      "native fallback uses the keyboard mute key, not a volume-zero command")
         suite.expect(events.allSatisfy { !$0.flags.contains(.maskAlternate) && !$0.flags.contains(.maskShift) },
                      "native mute fallback does not accidentally carry fine-volume modifiers")
+    }
+
+    private static func retainedAppMute(_ suite: TestSuite) {
+        let mixer = AppMute()
+        for (index, level) in [0.25, 0.5, 1.0, 1.8, 2.0].enumerated() {
+            let app = MixerApp(id: "app-\(index)", volume: level)
+            suite.expect(mixer.displayedVolume(for: app) == level, "unmuted app display follows actual volume")
+            mixer.toggleMute(app)
+            let muted = MixerApp(id: app.id, volume: 0)
+            suite.expect(mixer.writes.last == 0 && mixer.displayedVolume(for: muted) == level,
+                         "muting sends zero gain but retains the previous percentage/slider level, including boost")
+            let writesBeforeDisplay = mixer.writes.count
+            _ = mixer.displayedVolume(for: muted)
+            suite.expect(mixer.writes.count == writesBeforeDisplay, "displaying a remembered value cannot unmute the audio engine")
+            mixer.toggleMute(muted)
+            suite.expect(mixer.writes.last == level, "unmute restores exactly the level displayed while muted")
+        }
+        suite.expect(mixer.displayedVolume(for: MixerApp(id: "app-0", volume: 0)) == 0.25,
+                     "muted apps retain independent levels")
+        let unknown = MixerApp(id: "new-muted-app", volume: 0)
+        suite.expect(mixer.displayedVolume(for: unknown) == 1, "unknown previous level displays the existing unity unmute default")
+        mixer.toggleMute(unknown)
+        suite.expect(mixer.writes.last == 1, "unknown-level display agrees with actual unmute behavior")
     }
 
 }

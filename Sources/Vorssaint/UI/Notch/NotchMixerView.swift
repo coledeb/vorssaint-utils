@@ -496,7 +496,8 @@ private struct NotchAppFader: View {
     @ObservedObject private var mixer = AppVolumeMixer.shared
     @ObservedObject private var l10n = L10n.shared
     private var strings: MixerFeatureStrings { FeatureStrings.mixer(l10n.language) }
-    private var percent: Int { MixerRoutingSupport.displayPercent(forVolume: app.volume) }
+    private var displayedVolume: Double { mixer.displayedVolume(for: app) }
+    private var percent: Int { MixerRoutingSupport.displayPercent(forVolume: displayedVolume) }
     private var sharingStrings: MixerScreenSharingStrings { .localized(l10n.language) }
     private var boosting: Bool { percent > 100 }
     private var muted: Bool { app.volume <= 0.001 }
@@ -528,23 +529,25 @@ private struct NotchAppFader: View {
                     .multilineTextAlignment(.center)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
-                NotchLevelSlider(value: Binding(get: { app.volume }, set: { mixer.setVolume($0, for: app) }),
+                NotchLevelSlider(value: Binding(get: { displayedVolume }, set: { mixer.setVolume($0, for: app) }),
                                  label: app.name, range: 0...AppVolumeMixer.maxVolume,
-                                 tint: boosting ? .orange : .white, vertical: true, trackThickness: 28, marker: 1,
+                                 tint: muted ? .secondary : (boosting ? .orange : .white), vertical: true, trackThickness: 28, marker: 1,
                                  valueLabel: "\(percent)%")
                     .frame(width: 40, height: NotchMixerFaderLayout.trackHeight(in: height))
+                    .disabled(muted)
                 NotchEditablePercent(percent: percent, maximum: Int(AppVolumeMixer.maxVolume * 100),
                                      editorID: "notch-app:\(app.id)", editingID: $editingVolumeID,
-                                     label: app.name, tint: boosting ? .orange : .secondary,
+                                     label: app.name, tint: muted ? Color.secondary.opacity(0.5) : (boosting ? .orange : .secondary),
                                      boosting: boosting, height: 28) {
                     mixer.setVolume($0, for: app)
                 }
+                .disabled(muted)
                 .frame(maxWidth: .infinity)
                 .overlay(alignment: .leading) {
                     Button { mixer.setVolume(1, for: app) } label: {
                         Image(systemName: "arrow.counterclockwise")
                             .font(.system(size: 12, weight: .semibold))
-                            .foregroundStyle(boosting ? Color.orange : Color.secondary)
+                            .foregroundStyle(!muted && boosting ? Color.orange : Color.secondary)
                             .frame(width: 28, height: 28)
                             .contentShape(Rectangle())
                     }

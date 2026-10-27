@@ -1082,9 +1082,12 @@ private struct MixerRow: View {
 
     /// Warm accent to flag the boost range, darkened in Light Mode for contrast.
     private var boostColor: Color { PanelMetricColor.orange(for: colorScheme) }
-    /// Tie the visual state to the displayed percentage, so "amber" and ">100%"
-    /// always agree and the reset hides exactly when the row reads 100%.
-    private var isBoosting: Bool { (app.volume * 100).rounded() > 100 }
+    /// Keep boost styling tied to the displayed level; reset still follows
+    /// actual gain so it can restore unity even while muted.
+    private var isMuted: Bool { app.volume <= 0.001 }
+    private var displayedVolume: Double { mixer.displayedVolume(for: app) }
+    private var percentColor: Color { isMuted ? Color.secondary.opacity(0.5) : (isBoosting ? boostColor : .secondary) }
+    private var isBoosting: Bool { (displayedVolume * 100).rounded() > 100 }
     private var isAtUnity: Bool { (app.volume * 100).rounded() == 100 }
 
     /// SoundSource-sized icon spanning the row's two lines (issue #166); the
@@ -1151,8 +1154,9 @@ private struct MixerRow: View {
                                           glassEnabled: glassEnabled,
                                           maximum: AppVolumeMixer.maxVolume,
                                           accessibilityLabel: app.name)
+                            .disabled(isMuted)
 
-                        EditableVolumePercent(currentPercent: MixerRoutingSupport.displayPercent(forVolume: app.volume),
+                        EditableVolumePercent(currentPercent: MixerRoutingSupport.displayPercent(forVolume: displayedVolume),
                                               maximumPercent: Int(AppVolumeMixer.maxVolume * 100),
                                               width: 42,
                                               editorID: "app:\(app.id)",
@@ -1162,23 +1166,24 @@ private struct MixerRow: View {
                                 if isBoosting {
                                     Image(systemName: "bolt.fill")
                                         .font(.system(size: 8, weight: .bold))
-                                        .foregroundStyle(boostColor)
+                                        .foregroundStyle(percentColor)
                                 }
-                                Text("\(MixerRoutingSupport.displayPercent(forVolume: app.volume))%")
+                                Text("\(MixerRoutingSupport.displayPercent(forVolume: displayedVolume))%")
                                     .font(.system(size: 10.5, weight: .medium))
                                     .monospacedDigit()
-                                    .foregroundStyle(isBoosting ? boostColor : Color.secondary)
+                                    .foregroundStyle(percentColor)
                             }
                         } onCommit: {
                             mixer.setVolume($0, for: app)
                         }
+                        .disabled(isMuted)
 
                         Button {
                             mixer.setVolume(1, for: app)
                         } label: {
                             Image(systemName: "arrow.counterclockwise")
                                 .font(.system(size: 9.5, weight: .semibold))
-                                .foregroundStyle(isBoosting ? boostColor : Color.secondary)
+                                .foregroundStyle(!isMuted && isBoosting ? boostColor : Color.secondary)
                                 .frame(width: 14)
                         }
                         .buttonStyle(.plain)
@@ -1246,7 +1251,7 @@ private struct MixerRow: View {
 
     private var volumeBinding: Binding<Double> {
         Binding(
-            get: { app.volume },
+            get: { displayedVolume },
             set: { mixer.setVolume($0, for: app) }
         )
     }
@@ -1314,8 +1319,9 @@ struct EditableVolumePercent<Label: View>: View {
     let onCommit: (Double) -> Void
 
     @State private var draft = ""
+    @Environment(\.isEnabled) private var isEnabled
 
-    private var isEditing: Bool { editingID == editorID }
+    private var isEditing: Bool { isEnabled && editingID == editorID }
 
     var body: some View {
         ZStack {
@@ -1356,15 +1362,23 @@ struct EditableVolumePercent<Label: View>: View {
             .accessibilityHidden(isEditing)
         }
         .frame(width: width, alignment: alignment)
+        .onChange(of: isEnabled) { _, enabled in
+            if !enabled, editingID == editorID { editingID = nil }
+        }
     }
 
     private func beginEditing() {
+        guard isEnabled else { return }
         draft = String(currentPercent)
         editingID = editorID
     }
 
     @discardableResult
     private func commit() -> Bool {
+        guard isEnabled else {
+            editingID = nil
+            return true
+        }
         guard let volume = MixerRoutingSupport.volumeFraction(
             fromPercentageText: draft,
             maximumPercent: maximumPercent

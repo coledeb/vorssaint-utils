@@ -52,6 +52,9 @@ def main():
           + "final class Alerts: AlertFixture {\n"
           + declaration("Sources/Vorssaint/Services/Audio/SystemAlertVolume.swift", "    func toggleMute()")
           + declaration("Sources/Vorssaint/Services/Audio/SystemAlertVolume.swift", "    var displayVolume:") + "}\n"
+          + "final class AppMute: AppMuteFixture {\n"
+          + declaration("Sources/Vorssaint/Services/Audio/AppVolumeMixer.swift", "    func displayedVolume(")
+          + declaration("Sources/Vorssaint/Services/Audio/AppVolumeMixer.swift", "    func toggleMute(") + "}\n"
           + "final class Input: InputFixture {\n"
           + declaration("Sources/Vorssaint/Services/Audio/AudioInputDeviceManager.swift", "    func toggleVolumeMute()") + "}\n"
           + "final class Output {\n"

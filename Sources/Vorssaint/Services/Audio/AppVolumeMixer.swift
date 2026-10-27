@@ -1269,12 +1269,18 @@ final class AppVolumeMixer: ObservableObject {
         return setUniversalOutputDeviceUID(nextUID)
     }
 
+    /// Present the same level that unmuting will restore, without changing
+    /// the zero gain sent to the audio engine while this app is muted.
+    func displayedVolume(for app: MixerApp) -> Double {
+        app.volume > 0.001 ? app.volume : (lastAudibleVolume[app.id] ?? 1)
+    }
+
     func toggleMute(_ app: MixerApp) {
         if app.volume > 0.001 {
             lastAudibleVolume[app.id] = app.volume
             setVolume(0, for: app)
         } else {
-            setVolume(lastAudibleVolume[app.id] ?? 1, for: app)
+            setVolume(displayedVolume(for: app), for: app)
         }
     }
 
