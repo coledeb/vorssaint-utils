@@ -13,6 +13,7 @@ struct MixerOutputDevice: Identifiable, Equatable {
     let uid: String
     let name: String
     var iconURL: URL? = nil
+    var isAirPlay = false
     let isDefault: Bool
     let isHeadphones: Bool
     let canBeDefaultOutput: Bool
@@ -2567,6 +2568,7 @@ final class AppVolumeMixer: ObservableObject {
                                              uid: uid,
                                              name: name,
                                              iconURL: MixerRoutingSupport.deviceIconURL(deviceID),
+                                             isAirPlay: transportType == kAudioDeviceTransportTypeAirPlay,
                                              isDefault: uid == defaultUID,
                                              isHeadphones: MixerRoutingSupport.outputLooksLikeHeadphones(
                                                 name: name,
@@ -2594,6 +2596,7 @@ final class AppVolumeMixer: ObservableObject {
             devices.append(MixerOutputDevice(id: AirPlayRouteManager.airPlaySentinelUID,
                                              uid: AirPlayRouteManager.airPlaySentinelUID,
                                              name: airPlayName,
+                                             isAirPlay: true,
                                              isDefault: false,
                                              isHeadphones: false,
                                              canBeDefaultOutput: false,

@@ -7,11 +7,14 @@ import SwiftUI
 struct CompactAudioDeviceChoice {
     let id: String
     let title: String
+    var image: NSImage? = nil
+    var isSeparator = false
 }
 
 /// macOS' SwiftUI Menu can flatten a composed label into only its image. A
 /// native button preserves the complete boxed face and opens a normal NSMenu.
 struct CompactAudioDevicePicker: NSViewRepresentable {
+    @ObservedObject private var icons = AudioDeviceIconStore.shared
     @Binding var selection: String
     let title: String
     let name: String
@@ -21,22 +24,21 @@ struct CompactAudioDevicePicker: NSViewRepresentable {
     let enabled: Bool
 
     func makeNSView(context: Context) -> CompactAudioDeviceButton {
-        let button = CompactAudioDeviceButton(frame: .zero)
-        button.setButtonType(.momentaryPushIn)
+        let button = CompactAudioDeviceButton(frame: .zero, pullsDown: false)
         button.isBordered = false
         button.title = ""
         button.target = button
-        button.action = #selector(CompactAudioDeviceButton.showDeviceMenu)
+        button.action = #selector(AudioDevicePopUpButton.selectDevice(_:))
         button.setContentHuggingPriority(.required, for: .horizontal)
         button.setContentCompressionResistancePriority(.required, for: .horizontal)
         return button
     }
 
     func updateNSView(_ button: CompactAudioDeviceButton, context: Context) {
-        button.deviceImage = iconURL.flatMap { NSImage(contentsOf: $0) }
+        button.deviceImage = choices.first { $0.id == selection }?.image
+            ?? iconURL.flatMap { NSImage(contentsOf: $0) }
             ?? NSImage(systemSymbolName: fallback, accessibilityDescription: nil)
-        button.choices = choices
-        button.selectedID = selection
+        button.configure(choices: choices, selection: selection)
         button.onSelect = { selection = $0 }
         button.isEnabled = enabled
         button.toolTip = "\(title): \(name)"
@@ -46,11 +48,8 @@ struct CompactAudioDevicePicker: NSViewRepresentable {
     }
 }
 
-final class CompactAudioDeviceButton: NSButton {
+final class CompactAudioDeviceButton: AudioDevicePopUpButton {
     var deviceImage: NSImage?
-    var choices: [CompactAudioDeviceChoice] = []
-    var selectedID = ""
-    var onSelect: ((String) -> Void)?
 
     override var intrinsicContentSize: NSSize { NSSize(width: 46, height: 24) }
 
@@ -103,21 +102,137 @@ final class CompactAudioDeviceButton: NSButton {
         arrows.stroke()
     }
 
-    @objc func showDeviceMenu() {
-        guard isEnabled else { return }
+    // The inherited NSPopUpButton tracks the same image-bearing menu as the
+    // full selector. Only the closed face above is custom drawn.
+}
+
+/// SwiftUI's menu Picker drops images nested inside composed device labels.
+/// Use the same native pop-up control, supplying its menu images explicitly.
+struct AudioDeviceMenuPicker: NSViewRepresentable {
+    @Binding var selection: String
+    let title: String
+    let choices: [CompactAudioDeviceChoice]
+
+    func makeNSView(context: Context) -> AudioDevicePopUpButton {
+        let button = AudioDevicePopUpButton(frame: .zero, pullsDown: false)
+        button.controlSize = .small
+        button.font = .systemFont(ofSize: NSFont.smallSystemFontSize)
+        button.bezelStyle = .rounded
+        button.imagePosition = .imageLeading
+        button.alignment = .left
+        button.cell?.lineBreakMode = .byTruncatingTail
+        button.target = button
+        button.action = #selector(AudioDevicePopUpButton.selectDevice(_:))
+        button.setContentHuggingPriority(.defaultLow, for: .horizontal)
+        button.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        return button
+    }
+
+    func updateNSView(_ button: AudioDevicePopUpButton, context: Context) {
+        button.configure(choices: choices, selection: selection)
+        button.onSelect = { selection = $0 }
+        button.toolTip = title
+        button.setAccessibilityLabel(title)
+        button.setAccessibilityValue(button.title)
+    }
+}
+
+class AudioDevicePopUpButton: NSPopUpButton {
+    override init(frame buttonFrame: NSRect, pullsDown flag: Bool) {
+        super.init(frame: buttonFrame, pullsDown: flag)
+        cell = AudioDevicePopUpCell(textCell: "", pullsDown: flag)
+    }
+
+    required init?(coder: NSCoder) { super.init(coder: coder) }
+
+    var onSelect: ((String) -> Void)?
+
+    func configure(choices: [CompactAudioDeviceChoice], selection: String) {
+        alignment = .left
+        menu = AudioDeviceMenu.make(choices: choices, selectedID: selection, target: nil, action: nil)
+        if let index = choices.firstIndex(where: { !$0.isSeparator && $0.id == selection }) {
+            selectItem(at: index)
+        }
+    }
+
+    @objc func selectDevice(_ sender: NSPopUpButton) {
+        guard let uid = selectedItem?.representedObject as? String else { return }
+        onSelect?(uid)
+    }
+}
+
+enum AudioDeviceMenu {
+    static func make(choices: [CompactAudioDeviceChoice], selectedID: String,
+                     target: AnyObject?, action: Selector?) -> NSMenu {
         let menu = NSMenu()
+        menu.autoenablesItems = false
         for choice in choices {
-            let item = NSMenuItem(title: choice.title, action: #selector(selectDevice(_:)), keyEquivalent: "")
-            item.target = self
+            if choice.isSeparator { menu.addItem(.separator()); continue }
+            let item = NSMenuItem(title: choice.title, action: action, keyEquivalent: "")
+            item.image = choice.image.map { source in
+                let image = source.copy() as! NSImage
+                let scale = 16 / max(1, max(source.size.width, source.size.height))
+                image.size = NSSize(width: source.size.width * scale, height: source.size.height * scale)
+                return image
+            }
+            item.target = target
             item.representedObject = choice.id
             item.state = choice.id == selectedID ? .on : .off
             menu.addItem(item)
         }
-        menu.popUp(positioning: nil, at: NSPoint(x: bounds.minX, y: bounds.minY - 3), in: self)
+        return menu
+    }
+}
+
+/// NSPopUpButtonCell centers the image/title group even with left text
+/// alignment. Keep fixed leading columns while retaining native chrome/menu.
+final class AudioDevicePopUpCell: NSPopUpButtonCell {
+    override func drawInterior(withFrame cellFrame: NSRect, in controlView: NSView) {
+        drawImage(withFrame: cellFrame, in: controlView)
+        drawTitle(withFrame: cellFrame, in: controlView)
     }
 
-    @objc private func selectDevice(_ sender: NSMenuItem) {
-        guard let id = sender.representedObject as? String else { return }
-        onSelect?(id)
+    override func drawImage(withFrame cellFrame: NSRect, in controlView: NSView) {
+        guard let image = selectedItem?.image else { return }
+        let rendered: NSImage
+        if image.isTemplate {
+            rendered = NSImage(size: image.size, flipped: false) { bounds in
+                image.draw(in: bounds)
+                NSColor.controlTextColor.setFill()
+                bounds.fill(using: .sourceIn)
+                return true
+            }
+        } else {
+            rendered = image
+        }
+        rendered.draw(in: imageRect(forBounds: controlView.bounds), from: .zero,
+                      operation: .sourceOver, fraction: isEnabled ? 1 : 0.4,
+                      respectFlipped: true, hints: nil)
+    }
+
+    override func drawTitle(withFrame cellFrame: NSRect, in controlView: NSView) {
+        let paragraph = NSMutableParagraphStyle()
+        paragraph.lineBreakMode = .byTruncatingTail
+        paragraph.alignment = .left
+        let text = NSAttributedString(string: selectedItem?.title ?? stringValue, attributes: [
+            .font: font ?? NSFont.systemFont(ofSize: NSFont.smallSystemFontSize),
+            .foregroundColor: isEnabled ? NSColor.controlTextColor : NSColor.disabledControlTextColor,
+            .paragraphStyle: paragraph
+        ])
+        var rect = titleRect(forBounds: controlView.bounds)
+        rect.origin.y = controlView.bounds.midY - text.size().height / 2
+        rect.size.height = text.size().height
+        text.draw(in: rect)
+    }
+
+    override func imageRect(forBounds rect: NSRect) -> NSRect {
+        NSRect(x: rect.minX + 6, y: rect.midY - 8, width: 16, height: 16)
+    }
+
+    override func titleRect(forBounds rect: NSRect) -> NSRect {
+        let original = super.titleRect(forBounds: rect)
+        let leading = rect.minX + 26
+        return NSRect(x: leading, y: original.minY,
+                      width: max(0, rect.maxX - leading - 20), height: original.height)
     }
 }

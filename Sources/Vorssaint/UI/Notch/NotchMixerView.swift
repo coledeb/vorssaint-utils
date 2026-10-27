@@ -644,7 +644,8 @@ private struct NotchAppFader: View {
             Picker(l10n.s.mixerOutputTooltip, selection: outputSelection) {
                 Text(l10n.s.mixerOutputDefault).tag(MixerRoutingSupport.systemDefaultSelectionID)
                 ForEach(mixer.outputDevices) { device in
-                    Text(device.isDefault ? "\(device.name) (\(l10n.s.mixerOutputCurrent))" : device.name).tag(device.uid)
+                    AudioDeviceLabel(title: device.isDefault ? "\(device.name) (\(l10n.s.mixerOutputCurrent))" : device.name,
+                                     uid: device.uid, iconURL: device.iconURL, fallback: device.iconFallback).tag(device.uid)
                 }
                 if let selected = app.selectedOutputDeviceUID,
                    MixerRoutingSupport.needsUnavailableOutputRow(selectedUID: selected,

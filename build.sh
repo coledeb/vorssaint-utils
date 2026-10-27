@@ -420,6 +420,9 @@ if (( TEST )); then
         Sources/Vorssaint/Services/GeneralPasteboardAccess.swift
         Sources/Vorssaint/Services/Clipboard/ClipboardHistoryWrite.swift
         Sources/Vorssaint/Services/Audio/AirPlayRouteManager.swift
+        Sources/Vorssaint/UI/MenuPanel/CompactAudioDevicePicker.swift
+        Sources/Vorssaint/Services/Audio/AudioDeviceIconStore.swift
+        Sources/Vorssaint/Core/AudioDeviceIconStrings.swift
         Sources/Vorssaint/Services/Audio/MixerRoutingSupport.swift
         Sources/Vorssaint/Services/Audio/MusicLaunchSupport.swift
         Sources/Vorssaint/Services/Bluetooth/BluetoothSleepSupport.swift

@@ -16,9 +16,14 @@ enum SettingsPage: Hashable {
 /// pages. Raw values may be persisted or used by UI identifiers, so cases can
 /// be added but never renamed.
 enum SettingsSectionAnchor: String, CaseIterable, Hashable {
+    static func showsAudioDevices(isAvailable: (AppFeature) -> Bool) -> Bool {
+        [.mixer, .soundOutputSwitcher, .audioPriority].contains(where: isAvailable)
+    }
+
     case panelConfiguration
     case mixer
     case audioPriority
+    case audioDevices
     case musicBlocking
     case keepAwake
     case brightness
@@ -59,7 +64,7 @@ enum SettingsSectionAnchor: String, CaseIterable, Hashable {
 
     var page: SettingsPage {
         switch self {
-        case .panelConfiguration, .mixer, .audioPriority, .musicBlocking,
+        case .panelConfiguration, .mixer, .audioPriority, .audioDevices, .musicBlocking,
              .soundOutputSwitcher:
             return .general
         case .keepAwake, .brightness, .extraBrightness, .bluetoothSleep: return .energy

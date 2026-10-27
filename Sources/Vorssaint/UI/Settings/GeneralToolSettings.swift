@@ -51,6 +51,9 @@ struct GeneralToolSettings: View {
                         SoundOutputSwitcherControls()
                     }
                     .settingsSectionAnchor(.soundOutputSwitcher, cornerRadius: 16)
+                case .audioDevices:
+                    AudioDeviceIconSettings()
+                        .settingsSectionAnchor(.audioDevices, cornerRadius: 16)
                 case .audioPriority:
                     SettingsCard(title: l10n.s.audioPrioritySection) {
                         AudioPriorityDisclosure(initiallyExpanded: true, showsHeader: false)

@@ -74,6 +74,10 @@ struct AudioPriorityDisclosure: View {
                 priorityUIDs: priority.outputPriorityUIDs,
                 isAvailable: priority.isOutputAvailable,
                 displayName: priority.displayName,
+                icon: { uid in
+                    let device = mixer.outputDevices.first { $0.uid == uid }
+                    return AudioDeviceIcon(uid: uid, iconURL: device?.iconURL, fallback: device?.iconFallback ?? "speaker.wave.2.fill")
+                },
                 currentUID: mixer.currentOutputDeviceUID,
                 emptyText: l10n.s.mixerSystemOutputNoDevices,
                 onMove: { priority.setOutputPriorityUIDs($0) })
@@ -110,6 +114,10 @@ struct AudioPriorityDisclosure: View {
                 priorityUIDs: priority.inputPriorityUIDs,
                 isAvailable: priority.isInputAvailable,
                 displayName: priority.displayName,
+                icon: { uid in
+                    let device = inputManager.inputDevices.first { $0.uid == uid }
+                    return AudioDeviceIcon(uid: uid, iconURL: device?.iconURL, fallback: device?.iconFallback ?? "mic.fill")
+                },
                 currentUID: inputManager.currentInputDeviceUID,
                 emptyText: l10n.s.mixerInputNoDevices,
                 onMove: { priority.setInputPriorityUIDs($0) })
@@ -141,6 +149,7 @@ private struct PriorityDeviceList: View {
     let priorityUIDs: [String]
     let isAvailable: (String) -> Bool
     let displayName: (String) -> String?
+    let icon: (String) -> AudioDeviceIcon
     let currentUID: String?
     /// A list is only empty while the Mac has no such device.
     let emptyText: String
@@ -174,6 +183,8 @@ private struct PriorityDeviceList: View {
                 .font(.system(size: 10.5, weight: .medium, design: .rounded))
                 .foregroundStyle(.secondary)
                 .frame(width: 16, alignment: .center)
+
+            icon(uid)
 
             VStack(alignment: .leading, spacing: 1) {
                 HStack(spacing: 4) {

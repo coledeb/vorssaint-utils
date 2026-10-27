@@ -145,6 +145,10 @@ enum SettingsSearchSupport {
     static func route(for item: SettingsSearchItem,
                        isAvailable: (AppFeature) -> Bool = { $0.isAvailable })
         -> (destination: FeatureSettingsDestination, targetFeature: AppFeature?) {
+        if item.destination.sectionAnchor == .audioDevices,
+           !SettingsSectionAnchor.showsAudioDevices(isAvailable: isAvailable) {
+            return (FeatureSettingsDestination(.general), nil)
+        }
         if let feature = item.feature {
             guard isAvailable(feature) || leadsToVisiblePage(item, isAvailable: isAvailable) else {
                 return (FeatureSettingsDestination(.features), feature)
@@ -222,6 +226,8 @@ enum SettingsSearchSupport {
         guard !foldedQuery.isEmpty else { return [] }
 
         let navigableItems = items.compactMap { item -> SettingsSearchItem? in
+            if item.destination.sectionAnchor == .audioDevices,
+               !SettingsSectionAnchor.showsAudioDevices(isAvailable: isAvailable) { return nil }
             if let feature = item.feature, !isAvailable(feature),
                !leadsToVisiblePage(item, isAvailable: isAvailable) {
                 // The utility itself remains navigable through its Features

@@ -165,6 +165,7 @@ enum DefaultsKey {
     static let preciseVolumeRollerEnabled = "preciseVolumeRollerEnabled"
     static let soundOutputSwitcherEnabled = "soundOutputSwitcherEnabled"
     static let soundOutputSwitcherShortcut = "soundOutputSwitcherShortcut"
+    static let audioDeviceIcons = "audioDeviceIcons"
     static let soundOutputSwitcherDeviceUIDs = "soundOutputSwitcherDeviceUIDs"
     // Audio device priority: ordered output and microphone lists the feature
     // enforces automatically when its enable flags are on.
@@ -1310,6 +1311,7 @@ enum Defaults {
         DefaultsKey.mixerKeepPinnedAppsVisible: false,
         DefaultsKey.mixerAppArrangement: "",
         DefaultsKey.mixerCozyVolumeControls: false,
+        DefaultsKey.audioDeviceIcons: [String: String](),
         DefaultsKey.mixerMenuBarIndicator: false,
         DefaultsKey.mixerMenuBarReplaceMainIcon: false,
         DefaultsKey.mixerLowerVolumeOnHeadphonesDisconnect: false,

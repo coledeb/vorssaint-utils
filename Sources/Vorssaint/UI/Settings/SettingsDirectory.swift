@@ -61,6 +61,13 @@ enum SettingsDirectory {
                             }
                             return feature.hubTitle(s, hub: hub)
                         }
+                    if pageItem.page == .general,
+                       SettingsSectionAnchor.showsAudioDevices(isAvailable: isAvailable) {
+                        rows.append(SettingsSidebarItem(
+                            id: .setting(.audioDevices),
+                            destination: FeatureSettingsDestination(.general, sectionAnchor: .audioDevices),
+                            title: AudioDeviceIconStrings.localized(language).devices, icon: "hifispeaker.and.homepod"))
+                    }
                     if pageItem.page == .general {
                         rows.insert(SettingsSidebarItem(
                             id: .setting(.panelConfiguration),
@@ -160,6 +167,11 @@ enum SettingsDirectory {
                 .general, sectionAnchor: .panelConfiguration),
             title: s.menuBarSection, icon: "menubar.rectangle",
             keywords: [s.showMenuBarIcon, FeatureStrings.generalSettings(language).menuBarIconTitle, "SF Symbols"]))
+        items.append(SettingsSearchItem(
+            id: .setting(.audioDevices),
+            destination: FeatureSettingsDestination(.general, sectionAnchor: .audioDevices),
+            title: AudioDeviceIconStrings.localized(language).devices, icon: "hifispeaker.and.homepod",
+            keywords: [AudioDeviceIconStrings.localized(language).icons, "SF Symbols"]))
         if BrightnessService.keyboardLightIsSupported {
             items.append(SettingsSearchSupport.keyboardBrightnessShortcutItem(language: language))
         }

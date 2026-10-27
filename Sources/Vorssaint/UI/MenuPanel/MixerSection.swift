@@ -9,6 +9,7 @@ import SwiftUI
 /// 100% is untouched passthrough; below it attenuates and above it (up to 200%)
 /// boosts, with the slider and percentage turning amber in the boost range.
 struct MixerSection: View {
+    @ObservedObject private var deviceIcons = AudioDeviceIconStore.shared
     @Environment(\.notchPresentation) private var inNotch
     @ObservedObject private var l10n = L10n.shared
     @ObservedObject private var alertVolume = SystemAlertVolume.shared
@@ -128,38 +129,6 @@ struct MixerSection: View {
                 MixerOptionsControls(includeSharedAudioFeatures: !settingsMode)
                     .padding(.leading, 19)
             }
-        }
-    }
-
-    @ViewBuilder private var outputDeviceChoices: some View {
-        if mixer.currentOutputDeviceUID == nil {
-            Text(l10n.s.mixerOutputUnavailable)
-                .tag(MixerRoutingSupport.systemDefaultSelectionID)
-        }
-        ForEach(universalOutputDevices) { device in
-            Text(outputDeviceTitle(device))
-                .tag(device.uid)
-        }
-        if let selected = mixer.currentOutputDeviceUID,
-           !universalOutputDevices.contains(where: { $0.uid == selected }) {
-            Text(l10n.s.mixerOutputUnavailable)
-                .tag(selected)
-        }
-    }
-
-    @ViewBuilder private var alertDeviceChoices: some View {
-        if mixer.currentSystemSoundOutputDeviceUID == nil {
-            Text(l10n.s.mixerOutputUnavailable)
-                .tag(MixerRoutingSupport.systemDefaultSelectionID)
-        }
-        ForEach(systemSoundOutputDevices) { device in
-            Text(systemSoundOutputDeviceTitle(device))
-                .tag(device.uid)
-        }
-        if let selected = mixer.currentSystemSoundOutputDeviceUID,
-           !systemSoundOutputDevices.contains(where: { $0.uid == selected }) {
-            Text(l10n.s.mixerOutputUnavailable)
-                .tag(selected)
         }
     }
 
@@ -290,7 +259,8 @@ struct MixerSection: View {
 
     private func compactOutputChoices(_ devices: [MixerOutputDevice], selectedUID: String?,
                                       title: (MixerOutputDevice) -> String) -> [CompactAudioDeviceChoice] {
-        var choices = devices.map { CompactAudioDeviceChoice(id: $0.uid, title: title($0)) }
+        var choices = devices.map { CompactAudioDeviceChoice(id: $0.uid, title: title($0),
+            image: deviceIcons.image(uid: $0.uid, iconURL: $0.iconURL, fallback: $0.iconFallback)) }
         if selectedUID == nil {
             choices.insert(CompactAudioDeviceChoice(id: MixerRoutingSupport.systemDefaultSelectionID,
                                                     title: l10n.s.mixerOutputUnavailable), at: 0)
@@ -302,8 +272,10 @@ struct MixerSection: View {
 
     private var compactInputChoices: [CompactAudioDeviceChoice] {
         var choices = [CompactAudioDeviceChoice(id: MixerRoutingSupport.systemDefaultSelectionID,
-                                               title: l10n.s.mixerOutputDefault)]
-        choices += inputManager.inputDevices.map { CompactAudioDeviceChoice(id: $0.uid, title: inputDeviceTitle($0)) }
+                                               title: l10n.s.mixerOutputDefault,
+                                               image: displayedInputDevice.map { deviceIcons.image(uid: $0.uid, iconURL: $0.iconURL, fallback: $0.iconFallback) })]
+        choices += inputManager.inputDevices.map { CompactAudioDeviceChoice(id: $0.uid, title: inputDeviceTitle($0),
+            image: deviceIcons.image(uid: $0.uid, iconURL: $0.iconURL, fallback: $0.iconFallback)) }
         if !audioPriority.inputPriorityEnabled, let selected = inputManager.preferredInputDeviceUID,
            inputManager.preferredUnavailable {
             choices.append(CompactAudioDeviceChoice(id: selected, title: l10n.s.mixerInputUnavailable))
@@ -314,24 +286,19 @@ struct MixerSection: View {
     private var universalOutputPicker: some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack(spacing: 8) {
-                Label {
+                HStack(spacing: 8) {
+                    controlIcon("speaker.wave.2.fill")
                     Text(l10n.s.mixerSystemOutputTitle)
                         .font(.system(size: 11.5, weight: .medium))
-                } icon: {
-                    Image(systemName: "speaker.wave.2.fill")
-                        .font(.system(size: 10.5, weight: .semibold))
-                        .frame(width: 16)
+                        .foregroundStyle(.secondary)
                 }
-                .foregroundStyle(.secondary)
 
                 Spacer(minLength: 6)
 
-                Picker(l10n.s.mixerSystemOutputTooltip, selection: universalOutputSelectionBinding) {
-                    outputDeviceChoices
-                }
-                .labelsHidden()
-                .pickerStyle(.menu)
-                .controlSize(.small)
+                AudioDeviceMenuPicker(selection: universalOutputSelectionBinding,
+                                      title: l10n.s.mixerSystemOutputTooltip,
+                                      choices: compactOutputChoices(universalOutputDevices,
+                                          selectedUID: mixer.currentOutputDeviceUID, title: outputDeviceTitle))
                 .frame(width: 164)
                 .disabled(universalOutputDevices.isEmpty)
                 .help(l10n.s.mixerSystemOutputTooltip)
@@ -339,13 +306,6 @@ struct MixerSection: View {
 
             if let volume = mixer.systemOutputVolume {
                 HStack(spacing: 8) {
-                    Image(systemName: mixer.systemOutputMuted == true || volume <= 0.001
-                          ? "speaker.slash.fill"
-                          : "speaker.wave.2.fill")
-                        .font(.system(size: 10.5, weight: .semibold))
-                        .foregroundStyle(.secondary)
-                        .frame(width: 16)
-
                     MixerVolumeSlider(value: systemOutputVolumeBinding,
                                       normalTint: normalSliderTint,
                                       boostTint: normalSliderTint,
@@ -369,6 +329,7 @@ struct MixerSection: View {
                         setSystemOutputVolume($0)
                     }
                 }
+                .padding(.leading, 24)
             }
 
             if universalOutputDevices.isEmpty {
@@ -380,34 +341,26 @@ struct MixerSection: View {
     private var systemSoundOutputPicker: some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack(spacing: 8) {
-                Label {
+                HStack(spacing: 8) {
+                    controlIcon("bell.fill")
                     Text(l10n.s.mixerSoundEffectsOutputTitle)
                         .font(.system(size: 11.5, weight: .medium))
-                } icon: {
-                    Image(systemName: "bell.fill")
-                        .font(.system(size: 10.5, weight: .semibold))
-                        .frame(width: 16)
+                        .foregroundStyle(.secondary)
                 }
-                .foregroundStyle(.secondary)
 
                 Spacer(minLength: 6)
 
-                Picker(l10n.s.mixerSoundEffectsOutputTooltip,
-                       selection: systemSoundOutputSelectionBinding) {
-                    alertDeviceChoices
-                }
-                .labelsHidden()
-                .pickerStyle(.menu)
-                .controlSize(.small)
+                AudioDeviceMenuPicker(selection: systemSoundOutputSelectionBinding,
+                                      title: l10n.s.mixerSoundEffectsOutputTooltip,
+                                      choices: compactOutputChoices(systemSoundOutputDevices,
+                                          selectedUID: mixer.currentSystemSoundOutputDeviceUID, title: systemSoundOutputDeviceTitle))
                 .frame(width: 164)
                 .disabled(systemSoundOutputDevices.isEmpty)
                 .help(l10n.s.mixerSoundEffectsOutputTooltip)
             }
 
-            HStack(spacing: 8) {
-                controlIcon("bell.fill")
-                alertVolumeControl
-            }
+            alertVolumeControl
+                .padding(.leading, 24)
 
             if systemSoundOutputDevices.isEmpty {
                 inputMessage(l10n.s.mixerSystemOutputNoDevices, systemImage: "bell.slash")
@@ -462,42 +415,20 @@ struct MixerSection: View {
         )
     }
 
-    @ViewBuilder private var inputDeviceChoices: some View {
-        Text(l10n.s.mixerOutputDefault)
-            .tag(MixerRoutingSupport.systemDefaultSelectionID)
-        ForEach(inputManager.inputDevices) { device in
-            Text(inputDeviceTitle(device))
-                .tag(device.uid)
-        }
-        if !audioPriority.inputPriorityEnabled,
-           let selected = inputManager.preferredInputDeviceUID,
-           inputManager.preferredUnavailable {
-            Text(l10n.s.mixerInputUnavailable)
-                .tag(selected)
-        }
-    }
-
     private var microphonePicker: some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack(spacing: 8) {
-                Label {
+                HStack(spacing: 8) {
+                    controlIcon("mic.fill")
                     Text(l10n.s.mixerInputTitle)
                         .font(.system(size: 11.5, weight: .medium))
-                } icon: {
-                    Image(systemName: "mic.fill")
-                        .font(.system(size: 10.5, weight: .semibold))
-                        .frame(width: 16)
+                        .foregroundStyle(.secondary)
                 }
-                .foregroundStyle(.secondary)
 
                 Spacer(minLength: 6)
 
-                Picker(l10n.s.mixerInputTooltip, selection: inputSelectionBinding) {
-                    inputDeviceChoices
-                }
-                .labelsHidden()
-                .pickerStyle(.menu)
-                .controlSize(.small)
+                AudioDeviceMenuPicker(selection: inputSelectionBinding,
+                                      title: l10n.s.mixerInputTooltip, choices: compactInputChoices)
                 .frame(width: 164)
                 .disabled(inputManager.inputDevices.isEmpty)
                 .help(l10n.s.mixerInputTooltip)
@@ -505,11 +436,6 @@ struct MixerSection: View {
 
             if let volume = inputManager.inputVolume {
                 HStack(spacing: 8) {
-                    Image(systemName: volume <= 0.001 ? "mic.slash.fill" : "mic.fill")
-                        .font(.system(size: 10.5, weight: .semibold))
-                        .foregroundStyle(.secondary)
-                        .frame(width: 16)
-
                     MixerVolumeSlider(value: inputVolumeBinding,
                                       normalTint: normalSliderTint,
                                       boostTint: normalSliderTint,
@@ -533,6 +459,7 @@ struct MixerSection: View {
                         inputManager.setInputVolume($0)
                     }
                 }
+                .padding(.leading, 24)
                 .disabled(micMute.isMuted)
             }
 
@@ -1029,7 +956,7 @@ struct SoundOutputSwitcherControls: View {
                     } else {
                         ForEach(universalOutputDevices) { device in
                             Toggle(isOn: selectionBinding(for: device.uid)) {
-                                Text(outputDeviceTitle(device))
+                                AudioDeviceLabel(title: outputDeviceTitle(device), uid: device.uid, iconURL: device.iconURL, fallback: device.iconFallback)
                                     .font(.system(size: 10.5))
                                     .lineLimit(1)
                                     .truncationMode(.middle)
@@ -1090,6 +1017,7 @@ struct SoundOutputSwitcherControls: View {
 }
 
 private struct MixerRow: View {
+    @ObservedObject private var deviceIcons = AudioDeviceIconStore.shared
     @ObservedObject private var mixer = AppVolumeMixer.shared
     @ObservedObject private var l10n = L10n.shared
     @Environment(\.colorScheme) private var colorScheme
@@ -1278,31 +1206,36 @@ private struct MixerRow: View {
     }
 
     private var outputPicker: some View {
-        Picker(l10n.s.mixerOutputTooltip, selection: outputSelectionBinding) {
-            Text(l10n.s.mixerOutputDefault)
-                .tag(MixerRoutingSupport.systemDefaultSelectionID)
-            ForEach(mixer.outputDevices) { device in
-                Text(outputDeviceTitle(device))
-                    .tag(device.uid)
-            }
-            if let selected = app.selectedOutputDeviceUID,
-               MixerRoutingSupport.needsUnavailableOutputRow(selectedUID: selected,
-                                                             isUnavailable: app.outputDeviceUnavailable,
-                                                             listedUIDs: mixer.outputDevices.map(\.uid)) {
-                Text(l10n.s.mixerOutputUnavailable)
-                    .tag(selected)
-            }
-            if mixer.outputDevices.contains(where: { MixerRoutingSupport.isAirPlaySentinel($0.uid) }) {
-                Divider()
-                Text(l10n.s.mixerAirPlayChooseSpeaker)
-                    .tag(MixerRoutingSupport.airPlaySpeakerChoiceID)
-            }
+        AudioDeviceMenuPicker(selection: outputSelectionBinding,
+                              title: l10n.s.mixerOutputTooltip, choices: outputChoices)
+            .frame(width: 112)
+            .help(l10n.s.mixerOutputTooltip)
+    }
+
+    private var outputChoices: [CompactAudioDeviceChoice] {
+        let icons = deviceIcons
+        let current = mixer.outputDevices.first { $0.uid == mixer.currentOutputDeviceUID }
+        var choices = [CompactAudioDeviceChoice(id: MixerRoutingSupport.systemDefaultSelectionID,
+                                                title: l10n.s.mixerOutputDefault,
+                                                image: current.map { icons.image(uid: $0.uid, iconURL: $0.iconURL, fallback: $0.iconFallback) })]
+        choices += mixer.outputDevices.map {
+            CompactAudioDeviceChoice(id: $0.uid, title: outputDeviceTitle($0),
+                                     image: icons.image(uid: $0.uid, iconURL: $0.iconURL, fallback: $0.iconFallback))
         }
-        .labelsHidden()
-        .pickerStyle(.menu)
-        .controlSize(.small)
-        .frame(width: 112)
-        .help(l10n.s.mixerOutputTooltip)
+        if let selected = app.selectedOutputDeviceUID,
+           MixerRoutingSupport.needsUnavailableOutputRow(selectedUID: selected,
+                                                         isUnavailable: app.outputDeviceUnavailable,
+                                                         listedUIDs: mixer.outputDevices.map(\.uid)) {
+            choices.append(CompactAudioDeviceChoice(id: selected, title: l10n.s.mixerOutputUnavailable,
+                                                    image: icons.image(uid: selected, fallback: "speaker.wave.2.fill")))
+        }
+        if mixer.outputDevices.contains(where: { MixerRoutingSupport.isAirPlaySentinel($0.uid) }) {
+            choices.append(CompactAudioDeviceChoice(id: "", title: "", isSeparator: true))
+            choices.append(CompactAudioDeviceChoice(id: MixerRoutingSupport.airPlaySpeakerChoiceID,
+                                                    title: l10n.s.mixerAirPlayChooseSpeaker,
+                                                    image: NSImage(systemSymbolName: "airplay.audio", accessibilityDescription: nil)))
+        }
+        return choices
     }
 
     private var outputSelectionBinding: Binding<String> {

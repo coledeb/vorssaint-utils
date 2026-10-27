@@ -860,6 +860,8 @@ enum CommandBarCatalog {
                 else { return nil }
                 id = "settings.feature.\(feature.rawValue)"
             case .setting(let anchor):
+                if anchor == .audioDevices,
+                   !SettingsSectionAnchor.showsAudioDevices(isAvailable: { $0.isAvailable }) { return nil }
                 guard item.feature.map(\.isAvailable) ?? true,
                       FeatureVisibilitySupport.isPageVisible(
                         item.destination.page, isAvailable: { $0.isAvailable })
