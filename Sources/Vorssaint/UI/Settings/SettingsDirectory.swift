@@ -239,6 +239,7 @@ enum SettingsDirectory {
                                                            s.invertHorizontalScroll]),
                                         (.scrollHorizontal, [s.scrollHorizontalName,
                                                             s.scrollHorizontalModifierLabel]),
+                                        (.scrollZoom, [s.zoomSection, s.verticalZoom, s.pinchZoom]),
                                         (.middleClick, [s.middleClickTapPicker]),
                                         (.focusFollowsMouse, [s.focusFollowsMouseName,
                                                               s.focusFollowsMouseDelay,
@@ -414,6 +415,10 @@ enum SettingsDirectory {
                                                             .emptyTrashTitle,
                                                          FeatureStrings.brightness(language)
                                                             .keyboardLight]),
+                                        (.quitApps, [s.quitAppsName,
+                                                     FeatureStrings.quickToggles(language).quitAllTitle,
+                                                     FeatureStrings.quickToggles(language).quitOthersTitle,
+                                                     FeatureStrings.quickToggles(language).exceptionsTitle]),
                                         (.cameraPreview,
                                          [FeatureStrings.cameraPreview(language).pageTitle]),
                                         (.wallpaper,

@@ -63,6 +63,31 @@ def main():
           + declaration("Sources/Vorssaint/UI/MenuPanel/MixerSection.swift", "    private func toggleMicrophoneMute()")
               .replace("private func", "func", 1).replace("AppFeature.micMute.isAvailable", "featureAvailable")
           + "}\n}\n")
+    write("SettingsCommandDispatch.swift", "import Foundation\n"
+          + "extension SettingsFeatureTests.CommandDispatchHost {\nstatic func run() {\n"
+          # Both app entry points are named main.swift. Keep diagnostics in
+          # this generated file to avoid ambiguous #fileID source locations.
+          + "\n".join(line for line in declaration(
+              "Sources/Vorssaint/main.swift", "if let command = SettingsBackupSupport.command(")
+              .splitlines() if not line.startswith("#sourceLocation")) + "\n"
+          + "}\n}\n")
+    slider_area = "Sources/Vorssaint/UI/SliderScrollArea.swift"
+    slider_control = "Sources/Vorssaint/UI/Notch/NotchLevelSlider.swift"
+    wheel_route = "Sources/Vorssaint/Services/HorizontalWheelScrolling.swift"
+    brightness = "Sources/Vorssaint/Services/Display/BrightnessService.swift"
+    write("SliderScrollRouting.swift", "import AppKit\n"
+          + declaration(slider_area, "protocol SliderScrollTarget:")
+          + declaration(slider_area, "extension SliderScroll {")
+          + declaration(slider_control, "private final class NotchLevelControl:")
+              .replace("private final class NotchLevelControl", "final class NotchLevelControl", 1)
+          + "extension SliderScrollRoutingTests {\nenum Route {\n"
+          + declaration(wheel_route, "    static func sidewaysStrip(")
+          + declaration(wheel_route, "    private static func scrolls(")
+          + "}\nfinal class Light: LightState {\n"
+          + declaration(brightness, "    func keyboardLightDragChanged(")
+          + declaration(brightness, "    private func finishKeyboardLightDrag(")
+          + declaration(brightness, "    func setKeyboardLightLevel(")
+          + "}\n}\n")
     recent_captures = "Sources/Vorssaint/Services/QuickTools/RecentCaptureService.swift"
     write("RecentCapturePanel.swift", "import Foundation\nimport Carbon.HIToolbox\n"
           + "extension RecentCapturePanelTests {\nfinal class Service: Fixture {\n"
@@ -349,7 +374,7 @@ def main():
           + "extension SwitcherActivationTests.Activator {\n"
           + "".join(declaration(activator, prefix).replace("private static", "static", 1)
                     for prefix in ["    private static func activateApp(",
-                                   "    private static func activateAppCooperatively(",
+                                   "    static func activateAppCooperatively(",
                                    "    private static func activateSource("])
           + "}\nextension SwitcherActivationTests.HiddenSpaceActivator {\n"
           + "".join(declaration(activator, prefix).replace("private static", "static", 1)
@@ -793,6 +818,13 @@ def main():
     # The raw wheel tap runs as shipped: linear scrolling's cap, carry and
     # write-back, then the direction change. Only the services it asks and
     # the defaults it reads are fixtures.
+    write("ZoomSettingsDirectory.swift", "import Foundation\n"
+          + declaration("Sources/Vorssaint/UI/Settings/SettingsDirectory.swift", "struct SettingsDirectoryItem:")
+          + "enum SettingsDirectory {\n"
+          + declaration("Sources/Vorssaint/UI/Settings/SettingsDirectory.swift", "    static func sections(")
+              .replace("SuperKeyService.shared.source", ".capsLock")
+              .replace("$0.hubTitle(s, hub: FeatureStrings.hub(language))", "$0.rawValue")
+          + "}\n")
     wheel_tap = declaration("Sources/Vorssaint/Services/ScrollInverter.swift", "    private func handle(type:",
                             scope="final class ScrollInverter:")
     if wheel_tap.count("AppFeature.linearScroll.isAvailable") != 1:
@@ -800,6 +832,10 @@ def main():
     write("LinearScrollTap.swift", "import CoreGraphics\nimport Foundation\nextension LinearScrollTapTests.Inverter {\n"
           + wheel_tap.replace("private func", "func", 1)
                      .replace("AppFeature.linearScroll.isAvailable", "AppFeature.linearScroll.isAvailable(in: defaults)")
+          + declaration("Sources/Vorssaint/Services/ScrollInverter.swift", "    func consumeZoom(")
+          + "".join(declaration("Sources/Vorssaint/Services/ScrollInverter.swift", prefix)
+                    .replace("private func", "func", 1) for prefix in [
+                        "    private func postPinchZoomLocked(", "    private func endPinchZoomLocked()"])
           + declaration("Sources/Vorssaint/Services/ScrollInverter.swift", "    static func directionApplied(to event:",
                         scope="final class ScrollInverter:")
           + "}\nextension LinearScrollTapTests.SideWheel {\n"
@@ -820,7 +856,32 @@ def main():
                          .replace("down.post(tap: .cgSessionEventTap)", "recordReplay(down)")
                          .replace("if let proxy {", "if proxy != nil {")
           + "}\n")
+    write("ZoomTargetRefresh.swift", "import CoreGraphics\nimport Foundation\n"
+          + "extension LinearScrollTapTests.Refresher {\n"
+          + "".join(declaration("Sources/Vorssaint/Services/ScrollInverter.swift", prefix)
+                    .replace("private func", "func", 1)
+                    .replace("AXIsProcessTrusted()", "self.AXIsProcessTrusted()") for prefix in [
+                        "    private func startZoomTargetTimerLocked()",
+                        "    private func stopZoomTargetTimerLocked()"])
+          + "}\n")
+    zoom_post = declaration("Sources/Vorssaint/Services/ScrollInverter.swift", "    private func postKeyboardZoom(")
+    write("ZoomTargetRequest.swift", "import CoreGraphics\nimport Foundation\n"
+          + "extension LinearScrollTapTests.TargetResolver {\n"
+          + "".join(declaration("Sources/Vorssaint/Services/ScrollInverter.swift", prefix)
+                    .replace("private func", "func", 1) for prefix in [
+                        "    private func invalidateZoomTargetLocked()",
+                        "    private func requestZoomTargetLocked("])
+          + "}\n")
+    for name in ["down", "up", "restore"]:
+        zoom_post = zoom_post.replace(f"{name}.postToPid(targetProcessID)", f"recordZoomEvent({name}, to: targetProcessID)")
+    write("ZoomKeyboardPost.swift", "import CoreGraphics\nimport Carbon.HIToolbox\n"
+          + "extension LinearScrollTapTests.Inverter {\n"
+          + zoom_post.replace("private func", "func", 1) + "}\n")
     smooth = "Sources/Vorssaint/Services/SmoothScrollService.swift"
+    write("ScrollZoomFocus.swift", "import AppKit\nimport ApplicationServices\n"
+          + "extension ScrollZoomFocusTests {\n"
+          + declaration("Sources/Vorssaint/Services/Switcher/WindowActivator.swift", "    static func focusWindow(")
+          + "}\n")
     smooth_handler = declaration(smooth, "    private func handle(type:").replace("private func", "func", 1)
     smooth_handler = smooth_handler.replace("AppFeature.smoothScroll.isAvailable", "AppFeature.smoothScroll.isAvailable(in: UserDefaults.standard)")
     smooth_handler = smooth_handler.replace("AppFeature.linearScroll.isAvailable", "AppFeature.linearScroll.isAvailable(in: defaults)")
@@ -1106,6 +1167,25 @@ def main():
           + declaration("Sources/Vorssaint/Services/Notch/NotchWindowHost.swift", "final class NotchPanel:"))
     write("QuickTogglesAlert.swift", "import AppKit\nextension QuickTogglesAlertTests {\nfinal class Host: Fixture {\n"
           + declaration("Sources/Vorssaint/Services/QuickTools/QuickTogglesService.swift", "    func emptyTrash()")
+          + "}\n}\n")
+    quit_panel = "Sources/Vorssaint/Services/QuickTools/QuitAppsPanelController.swift"
+    quit_service = "Sources/Vorssaint/Services/QuickTools/QuickTogglesService.swift"
+    write("QuitAppsRuntime.swift", "import AppKit\nimport Carbon.HIToolbox\nimport Combine\nimport SwiftUI\n"
+          + "extension QuitAppsRuntimeTests {\n"
+          + declaration(quit_panel, "final class QuitAppsPanelController {")
+              .replace("private ", "")
+          + declaration(quit_panel, "final class QuitAppsModel:")
+          + declaration(quit_panel, "private struct QuitAppsView:").replace("private struct", "struct", 1)
+          + declaration(quit_panel, "private struct QuitAppsRowView:").replace("private struct", "struct", 1)
+          + "final class QuickTogglesService: ServiceState {\nstatic let shared = QuickTogglesService()\n"
+          + "".join(declaration(quit_service, prefix)
+                    for prefix in ["    func showQuitApps(", "    func quitAllApps(", "    func quitApp(",
+                                   "    private static func candidate(", "    func frontmostAppPID()"])
+          + "}\nfinal class AppDelegate {\nvar panelActivationSource: NSRunningApplication?\n"
+          + declaration("Sources/Vorssaint/App/AppDelegate.swift", "    var panelActivationSourcePID:")
+          + "}\nstruct Editor {\n"
+          + availability_declaration("Sources/Vorssaint/UI/Settings/RadialMenuSettings.swift",
+                                     "    private var availableQuickToggles:").replace("private var", "var", 1)
           + "}\n}\n")
     write("OverlayPanelDeclaration.swift", "import AppKit\n"
           + declaration("Sources/Vorssaint/UI/OverlayPanel.swift", "class OverlayPanel:"))

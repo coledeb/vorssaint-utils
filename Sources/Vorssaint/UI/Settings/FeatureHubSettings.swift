@@ -899,9 +899,8 @@ struct PermissionsPortalSections: View {
             }
             DispatchQueue.global(qos: .userInitiated).async {
                 let finder = Permissions.automationStatus(for: .finder)
-                let terminal = Permissions.automationStatus(for: .terminal)
                 DispatchQueue.main.async {
-                    automation = [.finder: finder, .terminal: terminal]
+                    automation = [.finder: finder]
                 }
             }
         }
@@ -932,7 +931,6 @@ struct PermissionsPortalSections: View {
             case .unknown: return .unknown
             }
         case .automationFinder: return automationStatus(.finder)
-        case .automationTerminal: return automationStatus(.terminal)
         case .automationPlayback: return .unknown
         case .audioCapture:
             // No public check exists for system audio capture; the mixer
@@ -1080,7 +1078,7 @@ private struct PermissionPortalRow: View {
             || Permissions.shared.calendarAccess == .writeOnly
         case .camera: return Permissions.shared.camera == .undetermined
         case .microphone: return Permissions.shared.microphone == .undetermined
-        case .filesAndFolders, .automationFinder, .automationTerminal, .automationPlayback, .audioCapture,
+        case .filesAndFolders, .automationFinder, .automationPlayback, .audioCapture,
              .appManagement: return false
         }
     }
@@ -1098,7 +1096,7 @@ private struct PermissionPortalRow: View {
         case .calendar: Permissions.shared.requestCalendar()
         case .camera: Permissions.shared.requestCamera()
         case .microphone: Permissions.shared.requestMicrophone()
-        case .filesAndFolders, .automationFinder, .automationTerminal, .automationPlayback, .audioCapture,
+        case .filesAndFolders, .automationFinder, .automationPlayback, .audioCapture,
              .appManagement:
             break
         }
@@ -1111,7 +1109,7 @@ private struct PermissionPortalRow: View {
         case .fullDiskAccess: Permissions.shared.openFullDiskAccessSettings()
         case .filesAndFolders: Permissions.shared.openFilesAndFoldersSettings()
         case .notifications: Permissions.shared.openNotificationSettings()
-        case .automationFinder, .automationTerminal, .automationPlayback: Permissions.shared.openAutomationSettings()
+        case .automationFinder, .automationPlayback: Permissions.shared.openAutomationSettings()
         case .audioCapture: Permissions.shared.openAudioCaptureSettings()
         case .microphone: Permissions.shared.openMicrophoneSettings()
         case .calendar: Permissions.shared.openCalendarSettings()
@@ -1149,6 +1147,7 @@ extension AppFeature {
         case .quitWindowProtection: return FeatureStrings.quitProtection(language).name
         case .scrollInverter: return s.invertMouseScroll
         case .scrollHorizontal: return s.scrollHorizontalName
+        case .scrollZoom: return s.zoomSection
         case .focusFollowsMouse: return s.focusFollowsMouseName
         case .smoothScroll: return s.smoothScrollName
         case .linearScroll: return s.linearScrollName
@@ -1180,6 +1179,7 @@ extension AppFeature {
         case .bluetoothSleep: return FeatureStrings.bluetoothSleep(language).pageTitle
         case .quickLauncher: return s.launcherName
         case .quickToggles: return FeatureStrings.quickToggles(language).pageTitle
+        case .quitApps: return s.quitAppsName
         case .colorPicker: return s.colorPickerName
         case .screenOCR: return s.ocrName
         case .screenshot: return FeatureStrings.screenshot(language).pageTitle
@@ -1233,6 +1233,9 @@ extension AppFeature {
         case .quitWindowProtection: return FeatureStrings.quitProtection(L10n.shared.language).description
         case .scrollInverter: return hub.descScrollInverter
         case .scrollHorizontal: return L10n.shared.s.scrollHorizontalCaption
+        case .scrollZoom:
+            let s = L10n.shared.s
+            return [s.verticalZoom, s.pinchZoom].joined(separator: ", ")
         case .focusFollowsMouse: return L10n.shared.s.focusFollowsMouseCaption
         case .smoothScroll: return hub.descSmoothScroll
         case .linearScroll: return L10n.shared.s.linearScrollCaption
@@ -1264,6 +1267,7 @@ extension AppFeature {
         case .bluetoothSleep: return FeatureStrings.bluetoothSleep(L10n.shared.language).hubDescription
         case .quickLauncher: return hub.descQuickLauncher
         case .quickToggles: return FeatureStrings.quickToggles(L10n.shared.language).hubDescription
+        case .quitApps: return L10n.shared.s.quitAppsCaption
         case .colorPicker: return hub.descColorPicker
         case .screenOCR: return hub.descScreenOCR
         case .screenshot: return FeatureStrings.screenshot(L10n.shared.language).hubDescription
@@ -1321,7 +1325,6 @@ extension AppPermission {
         case .filesAndFolders: return hub.permFilesAndFolders
         case .notifications: return hub.permNotifications
         case .automationFinder: return hub.permAutomationFinder
-        case .automationTerminal: return hub.permAutomationTerminal
         case .automationPlayback: return FeatureStrings.notchMusicExtras(L10n.shared.language).automationPermission
         case .audioCapture: return hub.permAudioCapture
         case .microphone: return FeatureStrings.recorder(L10n.shared.language).microphonePermissionName
@@ -1339,7 +1342,6 @@ extension AppPermission {
         case .filesAndFolders: return hub.explainFilesAndFolders
         case .notifications: return hub.explainNotifications
         case .automationFinder: return hub.explainAutomationFinder
-        case .automationTerminal: return hub.explainAutomationTerminal
         case .automationPlayback: return FeatureStrings.notchMusicExtras(L10n.shared.language).automationExplanation
         case .audioCapture: return hub.explainAudioCapture
         case .microphone:
