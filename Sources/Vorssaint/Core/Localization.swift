@@ -1288,7 +1288,6 @@ struct Strings {
     let scrollHorizontalName: String
     let zoomSection: String
     let zoomControlNote: String
-    let verticalZoom: String
     let pinchZoom: String
     let scrollHorizontalModifierLabel: String
     let scrollHorizontalCommandKey: String
@@ -2414,8 +2413,7 @@ extension Strings {
         invertHorizontalScroll: "Inverter rolagem horizontal",
         scrollHorizontalName: "Rolar na horizontal segurando uma tecla",
         zoomSection: "Zoom",
-        zoomControlNote: "Control + rolagem amplia o conteúdo do app em vez da tela do macOS. O Zoom por teclado ativa a janela sob o ponteiro.",
-        verticalZoom: "Zoom",
+        zoomControlNote: "Control + rolagem amplia o conteúdo do app em vez da tela do macOS.",
         pinchZoom: "Zoom por pinça",
         scrollHorizontalModifierLabel: "Tecla modificadora",
         scrollHorizontalCommandKey: "Command",
@@ -3542,8 +3540,7 @@ extension Strings {
         invertHorizontalScroll: "Invert horizontal scrolling",
         scrollHorizontalName: "Scroll sideways while holding a key",
         zoomSection: "Zoom",
-        zoomControlNote: "Control + scroll performs app zoom instead of macOS screen zoom. Keyboard Zoom activates the window under the pointer.",
-        verticalZoom: "Zoom",
+        zoomControlNote: "Control + scroll performs app zoom instead of macOS screen zoom.",
         pinchZoom: "Pinch Zoom",
         scrollHorizontalModifierLabel: "Modifier key",
         scrollHorizontalCommandKey: "Command",
