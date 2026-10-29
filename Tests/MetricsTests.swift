@@ -145,6 +145,7 @@ struct MetricsTests {
             ("audio-device-icons", { AudioDeviceIconTests.run(suite); MixerMuteButtonTests.run(suite) }),
             ("settings", {
                 SettingsFeatureTests.run(suite)
+                RadialFilePickerTests.run(suite)
                 SettingsWindowTests.run { suite.expect($0, $1) }
                 NotchSettingsChoiceTests.run(suite)
                 MonitorTokenTests.run(suite)
@@ -200,6 +201,7 @@ struct MetricsTests {
                 CleanerLayoutTests.run(suite)
             }),
             ("uninstaller", {
+                HomebrewOwnershipTests.run(suite)
                 UninstallerFlowTests.run(suite)
                 UninstallerCommandBarCleanupTests.run(suite)
                 SelfUninstallContract.run(suite)
@@ -214,6 +216,7 @@ struct MetricsTests {
             }),
             ("spaces-order", { SpacesOrderTests.run(suite) }),
             ("switcher", {
+                SwitcherAllWindowsTests.run(suite)
                 AXWindowResolverTests.run(suite)
                 SwitcherSearchLayoutTests.run(suite)
                 SwitcherScrollContract.run(suite)

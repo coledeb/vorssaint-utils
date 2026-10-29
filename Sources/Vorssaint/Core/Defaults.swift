@@ -107,6 +107,8 @@ enum DefaultsKey {
     static let systemShortcutTakeOverKeys = "systemShortcutTakeOverKeys"
     static let switcherShortcut = "switcherShortcut"      // GlobalShortcut storage value
     static let switcherWindowShortcut = "switcherWindowShortcut" // GlobalShortcut storage value
+    static let switcherAllWindowsShortcut = "switcherAllWindowsShortcut"
+    static let switcherAllWindowsShortcutEnabled = "switcherAllWindowsShortcutEnabled"
     static let switcherIconRowMode = "switcherIconRowMode"
     static let switcherSimpleMode = "switcherSimpleMode"  // app-only row without window captures
     static let switcherMergeTabs = "switcherMergeTabs"     // show one switcher entry per app (collapse all of an app's windows)
@@ -574,6 +576,7 @@ enum DefaultsKey {
     static let clipboardHistoryIncludeImagesFiles = "clipboardHistoryIncludeImagesFiles" // capture copied images and files too
     static let clipboardHistoryIgnoredApps = "clipboardHistoryIgnoredApps" // apps whose copies are never saved
     static let clipboardHistoryQuickPreview = "clipboardHistoryQuickPreview"
+    static let clipboardHistoryShowSourceAppIcons = "clipboardHistoryShowSourceAppIcons" // source app icons beside list entries
     static let clipboardHistoryLayout = "clipboardHistoryLayout" // cards | list, how the history window shows entries
     static let clipboardHistoryWindowWidth = "clipboardHistoryWindowWidth" // the list window's chosen size
     static let clipboardHistoryWindowHeight = "clipboardHistoryWindowHeight"
@@ -893,6 +896,7 @@ enum DefaultsKey {
     // AI agents: what the island reads from Claude Code, Codex, OpenCode and GitHub Copilot, and shows.
     static let notchAgentsEnabled = "notchAgentsEnabled"
     static let notchAgentsClaude = "notchAgentsClaude"
+    static let notchAgentsClaudeProfile = "notchAgentsClaudeProfile"
     static let notchAgentsCodex = "notchAgentsCodex"
     /// The Codex homes, `CODEX_HOME` folders, that get limits cards of their own.
     static let notchAgentsCodexProfiles = "notchAgentsCodexProfiles"
@@ -1283,6 +1287,8 @@ enum Defaults {
         DefaultsKey.switcherTakeOverSystemShortcuts: false,
         DefaultsKey.switcherShortcut: "command:48",
         DefaultsKey.switcherWindowShortcut: GlobalShortcut.switcherWindowDefault.storageValue,
+        DefaultsKey.switcherAllWindowsShortcut: GlobalShortcut.switcherAllWindowsDefault.storageValue,
+        DefaultsKey.switcherAllWindowsShortcutEnabled: false,
         DefaultsKey.switcherIconRowMode: false,
         DefaultsKey.switcherSimpleMode: false,
         DefaultsKey.switcherMergeTabs: false,
@@ -1496,6 +1502,7 @@ enum Defaults {
         DefaultsKey.notchCalendarExcluded: [String](),
         DefaultsKey.notchAgentsEnabled: false,
         DefaultsKey.notchAgentsClaude: true,
+        DefaultsKey.notchAgentsClaudeProfile: "",
         DefaultsKey.notchAgentsCodex: true,
         DefaultsKey.notchAgentsCodexProfiles: "",
         DefaultsKey.notchAgentsOpenCode: true,
@@ -1805,6 +1812,7 @@ enum Defaults {
         DefaultsKey.clipboardHistoryIgnoredApps: [String](),
         DefaultsKey.windowLayoutIgnoredApps: [String](),
         DefaultsKey.clipboardHistoryQuickPreview: false,
+        DefaultsKey.clipboardHistoryShowSourceAppIcons: false,
         DefaultsKey.clipboardHistoryLayout: ClipboardHistoryLayout.list.rawValue,
         DefaultsKey.clipboardHistoryWindowWidth: 0.0,
         DefaultsKey.clipboardHistoryWindowHeight: 0.0,
