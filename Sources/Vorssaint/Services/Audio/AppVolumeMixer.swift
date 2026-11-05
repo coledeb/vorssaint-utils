@@ -3501,6 +3501,7 @@ private final class TapGainEngine: GainEngine {
         }
         self.configuration = configuration
         let ramp = TapLevelRamp()
+        let appliedGain = MixerRender.AppliedGain()
         // A boost pushes loud samples past full scale, and clamping the
         // overshoot flattens every peak into audible crackle (issue #326).
         // The limiter turns the whole signal down for just the moment a peak
@@ -3519,6 +3520,7 @@ private final class TapGainEngine: GainEngine {
             guard configuration.canRender else {
                 MixerRender.silence(outputBuffers)
                 limiterBox.reset()
+                appliedGain.reset()
                 return
             }
             // The output clock keeps moving through a short or missing tap
@@ -3530,6 +3532,7 @@ private final class TapGainEngine: GainEngine {
                 // No samples to put in the buffer is not a reason to leave it:
                 // whatever the HAL left there plays otherwise (issue #326).
                 MixerRender.silence(outputBuffers)
+                appliedGain.reset()
                 return
             }
             let gain = box.value * ramp.next(toward: compensation.value, hostTime: now.pointee.mHostTime)
@@ -3537,10 +3540,14 @@ private final class TapGainEngine: GainEngine {
             // here on leaves the output written.
             let frames = MixerRender.render(source: inputBuffers[tapIndex],
                                             into: outputBuffers,
-                                            gain: gain)
+                                            gain: gain,
+                                            rampingFrom: appliedGain)
             // Draining delayed audio alone must not hide a stalled capture
             // from the engine's recovery check.
-            guard frames > 0 else { return }
+            guard frames > 0 else {
+                appliedGain.reset()
+                return
+            }
             cycles.increment()
         }) == noErr else {
             ioProc = nil
