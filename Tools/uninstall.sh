@@ -204,7 +204,9 @@ rm -f "$HOME/Library/Preferences/ByHost/$BUNDLE".*.plist(N)
 # The closed-lid rule under its current name and the two earlier ones, the
 # same files the app looks for. Each path is checked on its own. zsh passes an
 # unquoted string to a command as a single word, and one `ls` over all three
-# fails as soon as any of them is missing.
+# fails as soon as any of them is missing. The official app uses the same
+# rule; it is removed anyway so no password-free sudo rule outlives the fork,
+# and the official app can set it up again from its closed-lid setting.
 RULES=(/etc/sudoers.d/vorssaint-clamshell /etc/sudoers.d/vorssaint-utils-clamshell /etc/sudoers.d/vorss-clamshell)
 found_rules=()
 for rule in "${RULES[@]}"; do

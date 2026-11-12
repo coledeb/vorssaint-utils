@@ -6,7 +6,7 @@ The permission and uninstall commands below target this fork, `com.coledeb.vorss
 
 ## The app will not open
 
-Official upstream Vorssaint releases use Developer ID signing and notarization. This fork currently has no published app releases; builds from `Tools/build-local.py` are ad-hoc signed and are not notarized.
+Official upstream Vorssaint releases use Developer ID signing and notarization. This fork currently has no published app releases; builds from `Tools/build-local.py` are signed with a stable self-signed identity (or ad-hoc if it cannot be created) and are not notarized.
 
 If you built the app yourself or grabbed an unofficial copy, macOS Gatekeeper may stop it on the first launch. To open it anyway, do one of these.
 
@@ -77,9 +77,10 @@ starting a multiplexer or a slow prompt:
 
 ## Keeping settings in your dotfiles
 
-At each normal launch, Vorssaint reads `~/.config/vorssaint/settings.plist`.
-An absolute `XDG_CONFIG_HOME` selects the parent of `vorssaint/`. The Developer
-build uses `vorssaint-dev/`. Git, Stow or Home Manager can own the file,
+At each normal launch, this fork reads `~/.config/vorssaint-dev/settings.plist`.
+It always counts as a Developer build, so it uses `vorssaint-dev/`; the official
+app reads `vorssaint/`. An absolute `XDG_CONFIG_HOME` selects the parent of
+`vorssaint-dev/`. Git, Stow or Home Manager can own the file,
 including a symlink to a read-only target. Edits made during a session take
 effect the next time you launch the app.
 
@@ -87,7 +88,7 @@ Create a starting file by exporting your current settings. Backups include
 your text snippets, so review the contents before sharing one.
 
 ```sh
-/Applications/Vorssaint.app/Contents/MacOS/Vorssaint --export-settings ~/.config/vorssaint/settings.plist
+/Applications/Vorssaint.app/Contents/MacOS/Vorssaint --export-settings ~/.config/vorssaint-dev/settings.plist
 ```
 
 Keep the backup version and the `settings` dictionary. You can trim the
@@ -133,7 +134,7 @@ The bundled script takes out everything Vorssaint added, the app itself, its pre
 ./Tools/uninstall.sh
 ```
 
-Run it from a clone of this fork: the script also needs `Tools/stop-app.sh` beside it. It checks the installed bundle ID and refuses to remove the official app. Upstream settings and stored data are left intact. Would you rather do it by hand? Quit Vorssaint, drag it from Applications to the Trash, then clear its permissions.
+Run it from a clone of this fork: the script also needs `Tools/stop-app.sh` beside it. It checks the installed bundle ID and refuses to remove the official app. Upstream settings and stored data are left intact. The closed-lid `sudoers` rule is shared with the official app, so it is removed too; set it up again from the official app’s closed-lid setting if you use it there. Would you rather do it by hand? Quit Vorssaint, drag it from Applications to the Trash, then clear its permissions.
 
 ```sh
 tccutil reset All com.coledeb.vorssaint.utils

@@ -81,7 +81,7 @@ Per app volume, a real system monitor, a better app switcher, window snapping, D
 > - **Live output volume in the menu bar (optional).** Add a speaker beside the main icon or replace it, with waves that follow system volume, red at 100%, and a red speaker with an X when muted.
 > - **Default or Cozy volume controls.** Choose the labeled layout or a compact row for each output, system-sounds and microphone control, with aligned sliders, editable percentages and boxed device selectors. Device menus keep full names and icons; full selectors keep the icon and name aligned to the left.
 > - **Shared audio device icons.** Choose persistent device symbols under **Settings → Sound → Audio devices** for mixer menus, app routing and audio priority, with automatic artwork including AirPlay, an optional macOS symbol catalog and a reset option.
-> - **Click-to-mute audio controls.** Click Output, System sounds or Microphone icons to mute or restore audio in either layout; muted output, system-sounds and app sliders retain their levels and turn grey.
+> - **Click-to-mute audio controls.** Click Output, System sounds or Microphone icons to mute or restore audio in either layout; muted output, system-sounds and app sliders turn grey and keep their levels until Vorssaint quits.
 > - **Separate system-sounds volume.** Adjust macOS alert and sound-effect volume independently of output and microphone volume. The level loads before the mixer opens and follows external changes while the mixer is visible.
 > - **Keep pinned apps visible (optional).** Keep inactive running apps in both mixers while preserving hidden apps and saved volume and output choices; quitting removes their rows, and reopening restores them.
 > - **Direct mixer pin button.** Pin or unpin an app directly from its row; the right-click menu remains available, including upstream’s optional volume-control override for supported Discord and Teams apps. These apps bypass mixer processing by default to protect screen-shared audio.
@@ -92,7 +92,7 @@ Per app volume, a real system monitor, a better app switcher, window snapping, D
 > - **Settings and Quit beside the logo.** The menu bar panel keeps these actions in its header for quicker access and less space at the bottom.
 > - **Panel fits its content.** Balanced spacing and content-based sizing reduce empty space while keeping long sections scrollable.
 > - **Single-tab selector visibility.** Choose whether to hide the tab selector when only one section is visible.
-> - **Local builds without a signing certificate.** [Tools/build-local.py](Tools/build-local.py) wraps the upstream build with ad-hoc signing and a local compiler cache. The app and executable are named Vorssaint, including when installed at `/Applications/Vorssaint.app`.
+> - **Local builds without a paid certificate.** [Tools/build-local.py](Tools/build-local.py) wraps the upstream build with a free, stable self-signed identity and a local compiler cache, so permissions survive rebuilds and fan control can connect. The app and executable are named Vorssaint, including when installed at `/Applications/Vorssaint.app`.
 > - **Separate fork identity.** Bundle ID `com.coledeb.vorssaint.utils` separates this fork’s settings, data, permissions and fan helper from upstream, even at the same install path; grant the fork its own macOS permissions.
 > - **Upstream update proposals.** A scheduled [sync workflow](.github/UPSTREAM_SYNC.md) opens or refreshes pull requests for manual review and merging; update the installed fork by pulling its source and rebuilding.
 >
@@ -237,8 +237,10 @@ brew install --cask vorssaint
 ```
 
 Official upstream releases are Developer ID signed and notarized. Local builds
-made with this fork’s helper use ad-hoc signing; they are not notarized, and
-permissions may need to be granted again after a rebuild.
+made with this fork’s helper are signed with a stable self-signed identity that
+`Tools/setup-signing.sh` creates in its own keychain. They are not notarized,
+but permissions stay granted across rebuilds. If the identity cannot be
+created, the build falls back to ad-hoc signing and warns.
 
 ## Uninstall
 
