@@ -180,7 +180,7 @@ final class AudioInputDeviceManager: ObservableObject {
         }
     }
 
-    private var muteState = MixerVolumeMuteState()
+    private var muteState = MixerVolumeMuteState(persistencePrefix: "input:")
 
     func toggleVolumeMute() {
         guard listenerInstalled,

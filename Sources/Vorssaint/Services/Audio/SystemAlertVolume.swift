@@ -25,7 +25,12 @@ final class SystemAlertVolume: ObservableObject {
     private var desiredPercent: Int?
     private var busy = false
     private var revision = 0
-    private var muteState = MixerVolumeMuteState()
+    private static let muteDeviceID = "system-alerts" // matches toggleMute()
+    private var muteState = MixerVolumeMuteState(persistencePrefix: "alerts:")
+    /// After a relaunch, the first silent reading shows the level a mute
+    /// button press saved, as it did before quitting. Only once: a slider
+    /// dragged to zero later must stay at zero.
+    private var restoredMutedDisplay = false
 
     /// Warm the value at feature startup, like the output/input observers, so
     /// the first visible panel doesn't have to wait for its initial read.
@@ -100,7 +105,12 @@ final class SystemAlertVolume: ObservableObject {
                 guard let self else { return }
                 self.busy = false
                 if self.revision == startedRevision {
-                    if let value, value > 0.001 { self.mutedDisplayVolume = nil }
+                    if let value, value > 0.001 {
+                        self.mutedDisplayVolume = nil
+                    } else if value != nil, !self.restoredMutedDisplay, self.mutedDisplayVolume == nil {
+                        self.mutedDisplayVolume = self.muteState.restoreLevel(for: Self.muteDeviceID)
+                    }
+                    if value != nil { self.restoredMutedDisplay = true }
                     self.volume = value
                     self.unavailable = value == nil
                 }

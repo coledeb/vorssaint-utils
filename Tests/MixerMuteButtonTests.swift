@@ -89,6 +89,7 @@ enum MixerMuteButtonTests {
         suite.expect(PreciseVolumeKeyEvents.posts == 2 && NotchService.shared.shows == 1,
                      "superseded or unconfirmed output writes do not trigger another mute")
         retainedAppMute(suite)
+        persistedRestoreLevels(suite)
         let alerts = Alerts()
         alerts.toggleMute()
         suite.expect(alerts.volume == 0 && alerts.displayVolume == 0.37,
@@ -142,6 +143,34 @@ enum MixerMuteButtonTests {
                      "native fallback uses the keyboard mute key, not a volume-zero command")
         suite.expect(events.allSatisfy { !$0.flags.contains(.maskAlternate) && !$0.flags.contains(.maskShift) },
                      "native mute fallback does not accidentally carry fine-volume modifiers")
+    }
+
+    private static func persistedRestoreLevels(_ suite: TestSuite) {
+        let defaults = UserDefaults.standard
+        let key = DefaultsKey.mixerMuteRestoreVolumes
+        let original = defaults.object(forKey: key)
+        defer {
+            if let original { defaults.set(original, forKey: key) } else { defaults.removeObject(forKey: key) }
+        }
+        defaults.removeObject(forKey: key)
+        var beforeQuit = MixerVolumeMuteState(persistencePrefix: "test:")
+        suite.expect(beforeQuit.target(volume: 0.4, deviceUID: "mic") == 0, "persisted mute still writes zero")
+        var relaunched = MixerVolumeMuteState(persistencePrefix: "test:")
+        suite.expect(relaunched.restoreLevel(for: "mic") == 0.4 && relaunched.target(volume: 0, deviceUID: "mic") == 0.4,
+                     "a control muted before a relaunch unmutes to its earlier level")
+        suite.expect(MixerVolumeMuteState().restoreLevel(for: "mic") == nil,
+                     "memory-only mute state never reads saved levels")
+        var memoryOnly = MixerVolumeMuteState()
+        _ = memoryOnly.target(volume: 0.3, deviceUID: "speaker")
+        suite.expect((defaults.dictionary(forKey: key) ?? [:]).count == 1, "memory-only mute state never writes saved levels")
+        MixerMuteRestoreStore.set(1.6, for: "test:boosted")
+        suite.expect(MixerMuteRestoreStore.level(for: "test:boosted") == 1.6
+                     && MixerVolumeMuteState(persistencePrefix: "test:").restoreLevel(for: "boosted") == 1,
+                     "app boost levels are kept, while device controls clamp to full scale")
+        MixerMuteRestoreStore.set(.nan, for: "test:boosted")
+        MixerMuteRestoreStore.set(0, for: "test:mic")
+        suite.expect(MixerMuteRestoreStore.level(for: "test:mic") == nil && defaults.object(forKey: key) == nil,
+                     "invalid or silent levels clear their entry, and an empty store is removed")
     }
 
     private static func retainedAppMute(_ suite: TestSuite) {

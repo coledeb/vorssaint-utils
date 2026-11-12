@@ -1122,17 +1122,61 @@ enum AudioListenerClients {
     }
 }
 
+/// Levels the mute buttons restore, kept across relaunches so a control muted
+/// before Vorssaint quits unmutes to its earlier level rather than a default.
+enum MixerMuteRestoreStore {
+    static func level(for key: String, defaults: UserDefaults = .standard) -> Double? {
+        guard let number = defaults.dictionary(forKey: DefaultsKey.mixerMuteRestoreVolumes)?[key] as? NSNumber
+        else { return nil }
+        let value = number.doubleValue
+        return value.isFinite && value > 0.001 ? value : nil
+    }
+
+    static func set(_ level: Double?, for key: String, defaults: UserDefaults = .standard) {
+        var stored = defaults.dictionary(forKey: DefaultsKey.mixerMuteRestoreVolumes) ?? [:]
+        if let level, level.isFinite, level > 0.001 {
+            guard (stored[key] as? NSNumber)?.doubleValue != level else { return }
+            stored[key] = level
+        } else {
+            guard stored.removeValue(forKey: key) != nil else { return }
+        }
+        if stored.isEmpty {
+            defaults.removeObject(forKey: DefaultsKey.mixerMuteRestoreVolumes)
+        } else {
+            defaults.set(stored, forKey: DefaultsKey.mixerMuteRestoreVolumes)
+        }
+    }
+}
+
 /// Slider-based mute for controls that have no separate mute bit. Each device
 /// keeps its own restore level; nil/unavailable readings never cause a write.
 struct MixerVolumeMuteState {
     private var lastAudible: [String: Double] = [:]
+    /// Key prefix for `MixerMuteRestoreStore`; nil keeps levels in memory only.
+    var persistencePrefix: String?
+
+    init(persistencePrefix: String? = nil) {
+        self.persistencePrefix = persistencePrefix
+    }
 
     mutating func target(volume: Double?, deviceUID: String?) -> Double? {
         guard let volume, volume.isFinite, let deviceUID, !deviceUID.isEmpty else { return nil }
         if volume > 0.001 {
-            lastAudible[deviceUID] = min(1, volume)
+            let level = min(1, volume)
+            lastAudible[deviceUID] = level
+            if let persistencePrefix {
+                MixerMuteRestoreStore.set(level, for: persistencePrefix + deviceUID)
+            }
             return 0
         }
-        return lastAudible[deviceUID] ?? 0.5
+        return restoreLevel(for: deviceUID) ?? 0.5
+    }
+
+    /// The level unmuting would restore, from this session or a previous one.
+    func restoreLevel(for deviceUID: String) -> Double? {
+        if let level = lastAudible[deviceUID] { return level }
+        guard let persistencePrefix,
+              let level = MixerMuteRestoreStore.level(for: persistencePrefix + deviceUID) else { return nil }
+        return min(1, level)
     }
 }

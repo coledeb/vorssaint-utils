@@ -129,6 +129,8 @@ enum SettingsBackupSupport {
     /// out by construction (they are not preference keys), listed here only
     /// when they would otherwise slip in through the registered set.
     static let machineStateKeys: Set<String> = [
+        // Levels the mute buttons restore follow this Mac's devices and apps.
+        DefaultsKey.mixerMuteRestoreVolumes,
         DefaultsKey.displaysSwitchedOff,
         DefaultsKey.displaysSwitchedOffFingerprints,
         // Agent profiles are folders on this Mac whose sign-in the cards use,

@@ -83,7 +83,9 @@ final class AppVolumeMixer: ObservableObject {
     /// 200% boost for sources that play too quietly.
     static let maxVolume: Double = 2.0
 
-    @Published private(set) var apps: [MixerApp] = []
+    @Published private(set) var apps: [MixerApp] = [] {
+        didSet { restoreSavedMuteLevels() }
+    }
     @Published private(set) var outputDevices: [MixerOutputDevice] = []
     @Published private(set) var currentOutputDeviceUID: String?
     @Published private(set) var currentSystemSoundOutputDeviceUID: String?
@@ -143,6 +145,8 @@ final class AppVolumeMixer: ObservableObject {
         nil
     }
     private var lastAudibleVolume: [String: Double] = [:]
+    /// Muted rows already checked for a level saved by an earlier launch.
+    private var muteLevelsRestored: Set<String> = []
     private var listenerInstalled = false
     private var pinnedPreferencesObserver: AnyCancellable?
     private var appLifecycleObserver: AnyCancellable?
@@ -1151,7 +1155,13 @@ final class AppVolumeMixer: ObservableObject {
         engineRecovery.clear(app.id)
         let clamped = Defaults.sanitizedAppVolume(volume)
         persistVolume(clamped, for: app)
-        if clamped > 0.001 { lastAudibleVolume[app.id] = clamped }
+        if clamped > 0.001 {
+            lastAudibleVolume[app.id] = clamped
+        } else if let level = lastAudibleVolume[app.id], let id = app.persistenceID {
+            // Written once per mute, not per slider tick, so a relaunch
+            // still unmutes this app to the level it had.
+            MixerMuteRestoreStore.set(level, for: "app:" + id)
+        }
         if let index = apps.firstIndex(where: { $0.id == app.id }) {
             apps[index].volume = clamped
             let updated = apps[index]
@@ -1336,6 +1346,18 @@ final class AppVolumeMixer: ObservableObject {
     /// the zero gain sent to the audio engine while this app is muted.
     func displayedVolume(for app: MixerApp) -> Double {
         app.volume > 0.001 ? app.volume : (lastAudibleVolume[app.id] ?? 1)
+    }
+
+    /// A row muted before a relaunch shows, and unmutes to, the level it had
+    /// rather than 100%. Each row is checked once per launch.
+    private func restoreSavedMuteLevels() {
+        for app in apps where app.volume <= 0.001 && !muteLevelsRestored.contains(app.id) {
+            muteLevelsRestored.insert(app.id)
+            guard lastAudibleVolume[app.id] == nil,
+                  let id = app.persistenceID,
+                  let level = MixerMuteRestoreStore.level(for: "app:" + id) else { continue }
+            lastAudibleVolume[app.id] = Defaults.sanitizedAppVolume(level)
+        }
     }
 
     func toggleMute(_ app: MixerApp) {
