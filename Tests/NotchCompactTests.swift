@@ -211,11 +211,15 @@ enum NotchCompactTests {
         }
     }
 
-    static func settle(_ view: NSView? = nil) {
-        for _ in 0..<30 {
-            view?.layoutSubtreeIfNeeded()
-            RunLoop.current.run(until: Date().addingTimeInterval(0.01))
+    /// With a view, returns once its layout stops moving, within the 0.3 s
+    /// these checks always waited. Without one there is nothing to watch, so
+    /// queued work gets the whole 0.3 s.
+    static func settle(_ view: NSView? = nil, line: UInt = #line) {
+        guard let view else {
+            for _ in 0..<30 { RunLoop.current.run(until: Date().addingTimeInterval(0.01)) }
+            return
         }
+        Settle.quietly(limit: 0.3, line: line) { Settle.geometry(of: view) }
     }
     static func descendants(_ view: NSView) -> [NSView] {
         [view] + view.subviews.flatMap(descendants)

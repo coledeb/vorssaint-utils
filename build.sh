@@ -231,11 +231,14 @@ discard_test_preferences() {
         for name in "vorss.tests." "com.vorssaint.tests."; do
             rm -f "$preferences"/$name*.plist(N)
         done
-        rm -f "$preferences/metrics-tests.plist"
+        # Tests/run_suites.py runs numbered copies of the runner, each with its
+        # own standard domain.
+        rm -f "$preferences/metrics-tests.plist" "$preferences"/metrics-tests-[0-9]*.plist(N)
         sleep 0.2
         survivors=$(find "$preferences" -maxdepth 1 \
             \( -name "vorss.tests.*.plist" -o -name "com.vorssaint.tests.*.plist" \
-               -o -name "metrics-tests.plist" \) 2>/dev/null | wc -l | tr -d ' ')
+               -o -name "metrics-tests.plist" -o -name "metrics-tests-[0-9]*.plist" \) 2>/dev/null \
+            | wc -l | tr -d ' ')
         if [[ "$survivors" == "0" ]]; then
             quiet_passes=$((quiet_passes + 1))
             if (( quiet_passes == 2 )); then return 0; fi
@@ -616,7 +619,13 @@ if (( TEST )); then
         "${VM_STATISTICS_COMPAT_FLAGS[@]}" "${CORE_AUDIO_TAP_FLAGS[@]}" "${GIF_CODEC_FLAGS[@]}" \
         "${TEST_SOURCES[@]}" "${GIF_CODEC_OBJECTS[@]}" -o build/metrics-tests
     test_status=0
-    ./build/metrics-tests "${TEST_ARGS[@]}" || test_status=$?
+    if (( ${#TEST_ARGS} == 0 )); then
+        # Every suite in its own process, several at a time.
+        # VORSSAINT_TEST_JOBS=1 runs the runner once, serially.
+        python3 Tests/run_suites.py build/metrics-tests || test_status=$?
+    else
+        ./build/metrics-tests "${TEST_ARGS[@]}" || test_status=$?
+    fi
     if (( ${#TEST_ARGS} == 0 )); then
         ./Tests/PreferenceCleanupTests.sh || test_status=1
         ./Tests/UninstallSpacesTests.sh || test_status=1

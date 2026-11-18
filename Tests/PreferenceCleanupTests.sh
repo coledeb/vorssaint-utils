@@ -19,11 +19,15 @@ sleep() {
 }
 print '{}' > "$cleanup_test_dir/vorss.tests.first.plist"
 print '{}' > "$cleanup_test_dir/metrics-tests.plist"
+print '{}' > "$cleanup_test_dir/metrics-tests-3.plist"
+print 'preserve' > "$cleanup_test_dir/metrics-tests-notes.plist"
 print 'preserve' > "$cleanup_test_dir/unrelated.plist"
 discard_test_preferences "$cleanup_test_dir"
 [[ ! -e "$cleanup_test_dir/com.vorssaint.tests.delayed.plist" ]]
 [[ ! -e "$cleanup_test_dir/vorss.tests.first.plist" ]]
 [[ ! -e "$cleanup_test_dir/metrics-tests.plist" ]]
+[[ ! -e "$cleanup_test_dir/metrics-tests-3.plist" ]]
+[[ "$(cat "$cleanup_test_dir/metrics-tests-notes.plist")" == preserve ]]
 [[ "$(cat "$cleanup_test_dir/unrelated.plist")" == preserve ]]
 
 # A writer that never settles must still fail rather than hiding the problem.

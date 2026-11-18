@@ -78,9 +78,15 @@ enum NotchAgentLimitReadingTests {
         }
     }
 
-    @MainActor private static func settle(_ host: NSView) {
-        host.layoutSubtreeIfNeeded()
-        RunLoop.main.run(until: Date().addingTimeInterval(0.05))
+    /// Returns once the accessibility tree the checks read stops changing,
+    /// within the 0.05 s these checks always waited.
+    @MainActor private static func settle(_ host: NSView, line: UInt = #line) {
+        Settle.quietly(limit: 0.05, quiet: 0.015, line: line) { () -> [String] in
+            host.layoutSubtreeIfNeeded()
+            return elements(host).map { element in
+                "\(element.accessibilityIdentifier?() ?? "")|\(readingText(element) ?? "")|\(element.accessibilityFrame?() ?? .zero)"
+            }
+        }
         host.layoutSubtreeIfNeeded()
     }
 

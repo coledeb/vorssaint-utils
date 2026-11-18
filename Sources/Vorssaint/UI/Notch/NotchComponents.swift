@@ -336,9 +336,14 @@ struct NotchRail<Item: Identifiable, Content: View>: View {
                 .onAppear {
                     if let targetColumn { proxy.scrollTo(targetColumn, anchor: .center) }
                 }
-                .onChange(of: targetColumn) { _, target in
+                .onChange(of: targetColumn) { previous, target in
                     guard let target else { return }
-                    withAnimation(reduceMotion ? nil : .easeOut(duration: 0.16)) {
+                    // Animating a long jump lays out every column it passes,
+                    // hundreds in a long history. Only a move within about a
+                    // viewport animates; a distant selection lands directly.
+                    let visibleColumns = Int(width / max(1, itemWidth + spacing)) + 1
+                    let nearby = previous.map { abs(target - $0) / max(1, rows) <= visibleColumns } ?? false
+                    withAnimation(reduceMotion || !nearby ? nil : .easeOut(duration: 0.16)) {
                         proxy.scrollTo(target, anchor: .center)
                     }
                 }

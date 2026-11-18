@@ -571,11 +571,18 @@ enum SpacesOrderTests {
         let noticeDeadline = Date().addingTimeInterval(3)
         // Publication and recovery cleanup run on different queues. Wait for
         // both before the next case reuses these preferences.
+        // The watch starts on the hold's queue, so repeat the Space change
+        // until the watch has read it, then stop: another change arriving
+        // while that let-go is still being published would read again.
+        var lastNotice = Date.distantPast
         while (defaults.bool(forKey: enabled) || defaults.object(forKey: marker) != nil),
               Date() < noticeDeadline {
-            NSWorkspace.shared.notificationCenter.post(name: NSWorkspace.activeSpaceDidChangeNotification,
-                                                       object: nil)
-            RunLoop.main.run(mode: .default, before: Date().addingTimeInterval(0.02))
+            if dock.reads < 2, Date().timeIntervalSince(lastNotice) >= 0.1 {
+                NSWorkspace.shared.notificationCenter.post(name: NSWorkspace.activeSpaceDidChangeNotification,
+                                                           object: nil)
+                lastNotice = Date()
+            }
+            RunLoop.main.run(mode: .default, before: Date().addingTimeInterval(0.01))
         }
         suite.expect(defaults.object(forKey: marker) == nil && !defaults.bool(forKey: enabled)
                      && dock.events.isEmpty && dock.value == .on && dock.reads == 2,

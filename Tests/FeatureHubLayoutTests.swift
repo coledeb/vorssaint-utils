@@ -84,12 +84,10 @@ enum FeatureHubLayoutTests {
             runtime.needsRestartToUnload = false
             runtime.offersNeverUsed = false
         }
-        func settle() {
-            let deadline = Date().addingTimeInterval(0.3)
-            while Date() < deadline {
-                host.layoutSubtreeIfNeeded()
-                RunLoop.current.run(until: min(deadline, Date().addingTimeInterval(0.01)))
-            }
+        // An animated change keeps the whole 0.3 s, longer than its 0.22 s
+        // animation; anything else returns once the layout stops moving.
+        func settle(animated: Bool = false, line: UInt = #line) {
+            Settle.quietly(limit: 0.3, minimum: animated ? 0.3 : 0, line: line) { Settle.geometry(of: host) }
         }
         settle()
         guard let scroll = descendant(NSScrollView.self, in: host) else {
@@ -139,7 +137,7 @@ enum FeatureHubLayoutTests {
                     runtime.offersNeverUsed = offers
                     runtime.needsRestartToUnload = restart
                 }
-                settle()
+                settle(animated: true)
                 suite.expect(abs(scroll.contentView.bounds.minY - offset) < 2,
                              "a visible notice leaves the viewport at \(offset)pt")
             }
@@ -198,7 +196,7 @@ enum FeatureHubLayoutTests {
                 withAnimation(.easeOut(duration: 0.22)) {
                     runtime.needsRestartToUnload = restart
                 }
-                settle()
+                settle(animated: true)
                 let current = rowFrame(feature)
                 suite.expect(current.map { host.bounds.contains($0) } == true,
                              "\(feature.rawValue) stays visible when the offscreen restart notice is \(restart ? "added" : "removed")")
@@ -215,7 +213,7 @@ enum FeatureHubLayoutTests {
                     runtime.offersNeverUsed = offers
                     runtime.needsRestartToUnload = restart
                 }
-                settle()
+                settle(animated: true)
                 let current = rowFrame(feature)
                 suite.expect(current.map { host.bounds.contains($0) } == true,
                              "\(feature.rawValue) stays visible when the offscreen never-used offer is \(offers ? "added" : "removed")")
