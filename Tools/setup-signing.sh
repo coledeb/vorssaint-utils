@@ -69,8 +69,19 @@ security set-keychain-settings "$KC"            # no auto-lock
 security unlock-keychain -p "$KCPASS" "$KC"
 security import "$WORK/id.p12" -k "$KC" -P "$KCPASS" -T /usr/bin/codesign
 security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KCPASS" "$KC" >/dev/null 2>&1
-EXISTING=$(security list-keychains -d user | sed 's/"//g' | xargs)
-security list-keychains -d user -s "$KC" ${=EXISTING}
+# Append the keychain to the user search list, one argument per entry, keeping
+# every existing entry and its order. A flattened string here once collapsed the
+# whole list into a single bogus path, dropping the login keychain out of the
+# search list and breaking every app that keeps secrets there.
+typeset -a existing
+existing=(${(f)"$(security list-keychains -d user | sed -E 's/^[[:space:]]*"//; s/"[[:space:]]*$//')"})
+if (( ${#existing} == 0 )); then
+    echo "✗ Could not read the user keychain search list; not changing it." >&2
+    exit 1
+fi
+if (( ! ${existing[(Ie)$KC]} )); then
+    security list-keychains -d user -s "${existing[@]}" "$KC"
+fi
 
 # Import succeeding is not evidence codesign can sign with it: read it back the
 # same way build.sh looks it up, so a broken search list fails here and not as
